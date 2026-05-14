@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FOOTS FC | PLAY MODE</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Orbitron:wght@700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* === БАЗОВЫЕ СТИЛИ И ФОН === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #050505; font-family: 'Montserrat', sans-serif; color: #fff; -webkit-font-smoothing: antialiased; user-select: none; }
+
+.dark-bg { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% -10%, rgba(30,30,30,0.5) 0%, transparent 60%), linear-gradient(175deg, #050505 0%, #0a0a0a 50%, #000000 100%); z-index: -2; }
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* === БЕЛЫЕ СЕРЕБРЯНЫЕ МОНЕТЫ === */
+.svg-coin { width: 1.2em; height: 1.2em; display: inline-block; vertical-align: middle; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8)); margin-bottom: 2px;}
+
+/* Глобальный баланс */
+.global-balance { position: absolute; top: 24px; right: 40px; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); font-family: 'Orbitron', sans-serif; font-weight: 700; z-index: 100; font-size: 18px;}
+
+/* === НАВИГАЦИЯ И ЭКРАНЫ === */
+.screen { position: absolute; inset: 0; display: none; flex-direction: column; opacity: 0; transition: opacity 0.3s ease; }
+.screen.active { display: flex; opacity: 1; z-index: 10; }
+
+.modal-header { position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; gap: 14px; padding: 24px 40px; background: transparent; }
+.modal-back { width: 46px; height: 46px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.2s; z-index: 100; }
+.modal-back:hover { background: rgba(255,255,255,0.1); transform: scale(1.05); }
+.modal-back i { color: #fff; font-size: 18px; }
+.modal-title { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 2px; z-index: 100; }
+
+.content-wrapper { flex: 1; padding-top: 100px; display: flex; flex-direction: column; }
+
+/* === ЭКРАН МЕНЮ "ИГРАТЬ" === */
+.content-heading { padding: 0 40px 20px; max-width: 1200px; margin: 0 auto; width: 100%; }
+.content-heading h1 { font-family: 'Montserrat', sans-serif; font-size: clamp(26px, 5vw, 32px); font-weight: 900; color: #ffffff; line-height: 1.1; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.content-heading p { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.4); line-height: 1.5; max-width: 320px; }
+
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 0 40px; max-width: 1200px; margin: 0 auto; width: 100%; }
+.b-card { position: relative; background: #0c0c0c; border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 26px 24px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; }
+.b-card:hover:not(.disabled) { background: #151515; border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+.b-card:active:not(.disabled) { transform: scale(0.98); }
+
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.b-icon { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; }
+.b-icon i { font-size: 22px; color: #fff; }
+
+.b-badge { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; padding: 6px 14px; border-radius: 30px; text-transform: uppercase; }
+.b-badge.gray { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+.b-badge.white { background: #ffffff; color: #000000; }
+.b-badge.soon { background: transparent; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.2); }
+
+.b-title { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.b-desc { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.4); line-height: 1.5; }
+.b-card.disabled { opacity: 0.3; cursor: not-allowed; }
+.b-card.disabled .b-icon i { color: #666; }
+
+/* === ЭКРАНЫ ЛОББИ И ПОДКЛЮЧЕНИЯ === */
+.lobby-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 10vh; gap: 40px; }
+.room-code-box { background: #161616; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 30px; cursor: pointer; transition: 0.2s; text-align: center; }
+.room-code-box:hover { background: #222; border-color: rgba(255,255,255,0.3); transform: scale(1.05); }
+.room-code-box span { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: 3px; color: #ffffff; pointer-events: none; }
+.room-code-hint { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 4px; pointer-events: none;}
+
+.vs-block { display: flex; align-items: center; justify-content: center; gap: 40px; }
+.player-col { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 140px; }
+.avatar-circle { width: 80px; height: 80px; border-radius: 50%; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+.avatar-circle img { width: 50px; height: 50px; object-fit: contain; }
+.avatar-circle.bot { background: #111; border-color: #333; }
+.avatar-circle.bot i { font-size: 35px; color: #888; }
+.player-name { font-size: 13px; font-weight: 800; text-transform: uppercase; color: #ffffff; letter-spacing: 1px; text-align: center; }
+.vs-text { font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 800; color: #ffffff; }
+
+.spinner-wrapper { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
+.spinner { width: 45px; height: 45px; border: 5px solid #1a1a1a; border-top: 5px solid #555; border-radius: 50%; animation: spin 1s linear infinite; }
+.waiting-text { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #666; letter-spacing: 1px; text-align: center; }
+.lobby-hint { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.3); text-align: center; max-width: 320px; line-height: 1.5; }
+
+.join-input-wrapper { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.join-input { background: #111; border: 2px solid #333; border-radius: 12px; font-family: 'Orbitron', sans-serif; font-size: 24px; color: #fff; text-align: center; padding: 15px 30px; outline: none; width: 250px; text-transform: uppercase; letter-spacing: 3px; transition: 0.3s; }
+.join-input:focus { border-color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+.btn-primary { background: #fff; color: #000; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; border: none; padding: 16px 40px; border-radius: 30px; cursor: pointer; transition: 0.2s; }
+.btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.3); }
+.btn-primary:active { transform: scale(0.95); }
+
+/* === ИГРОВОЕ ПОЛЕ === */
+.game-board { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 10px 0 30px; overflow: hidden; }
+
+/* Центральная зона */
+.center-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 30px; }
+.scoreboard { display: flex; align-items: center; gap: 30px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px 40px; border-radius: 40px; backdrop-filter: blur(10px); }
+.score-name { font-size: 13px; font-weight: 800; color: #888; text-transform: uppercase; width: 100px; text-align: center; }
+.score-name.player { color: #fff; }
+.score-numbers { font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 800; color: #fff; letter-spacing: 2px; }
+.score-box { border: 2px solid #fff; border-radius: 6px; padding: 2px 10px; min-width: 45px; text-align: center; }
+
+.table-slots { display: flex; gap: 20px; }
+.card-slot { width: 85px; height: 125px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); transition: 0.3s; position: relative;}
+.card-slot.highlight { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05); box-shadow: inset 0 0 15px rgba(255,255,255,0.1); }
+
+/* Раскладка карт БЕЗ наслоений (прямой ряд со скроллом) */
+.player-row, .opponent-row { 
+    display: flex; gap: 10px; 
+    width: 100%; padding: 10px 20px; 
+    margin: 0 auto; 
+    overflow-x: auto; 
+    justify-content: flex-start; 
+    -ms-overflow-style: none; scrollbar-width: none; 
+}
+.player-row::-webkit-scrollbar, .opponent-row::-webkit-scrollbar { display: none; }
+
+@media (min-width: 800px) {
+    /* Если экран широкий, выравниваем ряд карт по центру */
+    .player-row, .opponent-row { justify-content: center; }
+}
+
+/* Стили карточек с новыми градиентами */
+.fut-card, .card-back { 
+    flex-shrink: 0; 
+    position: relative; width: 85px; height: 125px; 
+    border-radius: 8px; border: 2px solid #333; 
+    display: flex; flex-direction: column; overflow: hidden; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.6); 
+    cursor: pointer; transition: 0.2s; 
+}
+.fut-card:hover { transform: translateY(-5px); z-index: 50; border-color: #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.8); }
+
+/* Контейнер для 3D SVG манекена */
+.fut-player-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: flex; align-items: flex-end; justify-content: center; }
+.fut-player-img svg { width: 100%; height: auto; transform: translateY(15px); }
+
+/* Рейтинг и Имя */
+.fut-rating { position: absolute; top: 6px; left: 6px; font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 800; color: #fff; z-index: 5; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+.fut-bottom { position: absolute; bottom: 0; left: 0; width: 100%; height: 25px; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; border-top: 1px solid rgba(255,255,255,0.2); z-index: 3; }
+.fut-name { font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Оформление карточек под цвет рубашки */
+.fut-card.brown { border-color: #B8860B; background: linear-gradient(135deg, #7a5a00 0%, #b8860b 45%, #d4af37 50%, #b8860b 55%, #5c4400 100%); }
+.fut-card.brown .fut-player-img svg { color: #d4af37; } /* Золотая футболка */
+
+.fut-card.blue { border-color: #1e90ff; background: linear-gradient(135deg, #001f3f 0%, #004080 45%, #1e90ff 50%, #004080 55%, #001020 100%); }
+.fut-card.blue .fut-player-img svg { color: #1e90ff; } /* Синяя футболка */
+
+.fut-card.red { border-color: #ff3333; background: linear-gradient(135deg, #3e0000 0%, #8b0000 45%, #ff3333 50%, #8b0000 55%, #2a0000 100%); }
+.fut-card.red .fut-player-img svg { color: #ff3333; } /* Красная футболка */
+
+/* Рубашка карт FOOTS CARDS */
+.card-back { background: repeating-linear-gradient(-45deg, #111, #111 8px, #1a1a1a 8px, #1a1a1a 16px); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.card-back::after { content: 'FOOTS CARDS'; font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 9px; color: rgba(255,255,255,0.15); transform: rotate(-45deg); letter-spacing: 1px; white-space: nowrap; }
+
+/* Анимация переворота 3D для карточки противника */
+.flip-container { flex-shrink: 0; width: 85px; height: 125px; perspective: 1000px; margin: 0; }
+.flip-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s ease-in-out; transform-style: preserve-3d; }
+.flip-container.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-front, .flip-back { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; margin: 0; border-radius: 8px;}
+.flip-back { transform: rotateY(180deg); }
+
+/* Модалка итога матча */
+.end-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 15px; opacity: 0; transition: 0.3s; }
+.end-modal.active { display: flex; opacity: 1; }
+.end-title { font-family: 'Montserrat', sans-serif; font-size: 48px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; }
+.end-title.win { color: #4CAF50; text-shadow: 0 0 20px rgba(76, 175, 80, 0.5); }
+.end-title.lose { color: #F44336; text-shadow: 0 0 20px rgba(244, 67, 54, 0.5); }
+.end-title.draw { color: #bbb; margin-bottom: 20px; text-shadow: none; }
+.end-reward { font-family: 'Orbitron', sans-serif; font-size: 36px; font-weight: 800; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+
+/* Адаптивность для мобилок */
+@media (max-width: 768px) {
+    .modal-header { padding: 20px; }
+    .content-heading { padding: 0 20px 20px; }
+    .cards-grid { padding: 0 20px; grid-template-columns: 1fr; }
+    .global-balance { top: 20px; right: 20px; font-size: 14px; padding: 6px 12px; }
+    
+    /* Уменьшаем размер карт, чтобы 8 шт удобнее скроллились */
+    .fut-card, .card-back, .flip-container { width: 65px; height: 95px; }
+    .card-slot { width: 70px; height: 100px; }
+    
+    .fut-player-img svg { transform: translateY(10px); }
+    .fut-rating { font-size: 13px; top: 4px; left: 4px;}
+    .fut-bottom { height: 20px; }
+    .fut-name { font-size: 8px; }
+    .card-back::after { font-size: 6.5px; }
+    
+    .scoreboard { padding: 10px 20px; gap: 15px;}
+    .score-numbers { font-size: 24px; }
+    .score-box { min-width: 35px; }
+    .score-name { width: 70px; font-size: 11px; }
+    .end-title { font-size: 36px; }
+    .end-reward { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ДИНАМИЧЕСКИЙ 3D АВАТАР ДЛЯ КАРТОЧЕК -->
+<svg width="0" height="0" style="position:absolute;">
+  <defs>
+    <!-- Градиент блика на лысой голове -->
+    <radialGradient id="headGloss" cx="35%" cy="25%" r="50%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.8"/>
+      <stop offset="20%" stop-color="#666" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Затенение тела по краям -->
+    <linearGradient id="bodyShade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.7"/>
+      <stop offset="20%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="80%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.7"/>
+    </linearGradient>
+    <g id="dummy-avatar">
+      <!-- Шея -->
+      <path d="M42 45 v25 h16 v-25 z" fill="#050505"/>
+      <path d="M44 45 v25 h2 v-25 z" fill="#444"/>
+      <!-- Футболка (цвет зависит от currentColor родителя) -->
+      <path d="M 25 65 C 40 58, 60 58, 75 65 C 95 70, 98 90, 98 120 L 2 120 C 2 90, 5 70, 25 65 Z" fill="currentColor"/>
+      <path d="M 25 65 C 40 58, 60 58, 75 65 C 95 70, 98 90, 98 120 L 2 120 C 2 90, 5 70, 25 65 Z" fill="url(#bodyShade)"/>
+      <path d="M38 60 C38 70, 62 70, 62 60 C 55 66, 45 66, 38 60 Z" fill="#000" opacity="0.4"/>
+      <!-- Голова -->
+      <ellipse cx="50" cy="30" rx="20" ry="28" fill="#050505"/>
+      <ellipse cx="50" cy="30" rx="20" ry="28" fill="url(#headGloss)"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="dark-bg"></div>
+
+<!-- Глобальный счет монет + ИКОНКА БЕЛЫХ/СЕРЕБРЯНЫХ МОНЕТ -->
+<div class="global-balance"><span id="ui-global-coins">0</span> 
+    <svg class="svg-coin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 9v6c0 1.5 2.5 2.5 5 2.5s5-1 5-2.5V9" fill="#cccccc" stroke="#000" stroke-width="1.5"/>
+        <ellipse cx="17" cy="9" rx="5" ry="2.5" fill="#e6e6e6" stroke="#000" stroke-width="1.5"/>
+        <path d="M12 5v4c0 1.5 2.5 2.5 5 2.5s5-1 5-2.5V5" fill="#cccccc" stroke="#000" stroke-width="1.5"/>
+        <ellipse cx="17" cy="5" rx="5" ry="2.5" fill="#ffffff" stroke="#000" stroke-width="1.5"/>
+        <path d="M3 13v5c0 1.5 3 2.5 6 2.5s6-1 6-2.5v-5" fill="#cccccc" stroke="#000" stroke-width="1.5"/>
+        <ellipse cx="9" cy="13" rx="6" ry="2.5" fill="#e6e6e6" stroke="#000" stroke-width="1.5"/>
+        <path d="M3 9v4c0 1.5 3 2.5 6 2.5s6-1 6-2.5V9" fill="#cccccc" stroke="#000" stroke-width="1.5"/>
+        <ellipse cx="9" cy="9" rx="6" ry="2.5" fill="#ffffff" stroke="#000" stroke-width="1.5"/>
+    </svg>
+</div>
+
+<!-- === 1. МЕНЮ "ИГРАТЬ" === -->
+<div id="play-menu-screen" class="screen active">
+    <div class="modal-header">
+        <div class="modal-back"><i class="fa-solid fa-arrow-left"></i></div>
+        <div class="modal-title">ИГРАТЬ</div>
+    </div>
+    <div class="content-wrapper">
+        <div class="content-heading">
+            <h1>ВЫБЕРИ РЕЖИМ</h1>
+            <p>Выходи на поле и докажи своё превосходство.</p>
+        </div>
+        <div class="cards-grid">
+            <div class="b-card" onclick="startBotMatch()">
+                <div class="card-top"><div class="b-icon"><i class="fa-solid fa-robot"></i></div><span class="b-badge gray">ТРЕНИРОВКА</span></div>
+                <div class="b-title">МАТЧ С БОТОМ</div><div class="b-desc">Отточи свои навыки против ИИ.</div>
+            </div>
+            <div class="b-card" onclick="switchScreen('friend-options-screen')">
+                <div class="card-top"><div class="b-icon"><i class="fa-solid fa-user-group"></i></div><span class="b-badge white">ПОПУЛЯРНО</span></div>
+                <div class="b-title">ИГРА С ДРУГОМ</div><div class="b-desc">Брось вызов друзьям.</div>
+            </div>
+            <div class="b-card disabled">
+                <div class="card-top"><div class="b-icon"><i class="fa-solid fa-trophy"></i></div><span class="b-badge soon">SOON</span></div>
+                <div class="b-title" style="color: #666;">ОНЛАЙН ТУРНИР</div><div class="b-desc" style="color: #444;">Сражайся за рейтинг в лиге.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- === 2. ВЫБОР РЕЖИМА "С ДРУГОМ" === -->
+<div id="friend-options-screen" class="screen">
+    <div class="modal-header">
+        <div class="modal-back" onclick="switchScreen('play-menu-screen')"><i class="fa-solid fa-arrow-left"></i></div>
+        <div class="modal-title">ИГРА С ДРУГОМ</div>
+    </div>
+    <div class="content-wrapper">
+        <div class="content-heading" style="text-align: center;">
+            <h1 style="font-size: 24px;">ПОДКЛЮЧЕНИЕ</h1>
+            <p style="margin: 0 auto;">Создай свою комнату или присоединись к существующей.</p>
+        </div>
+        <div class="cards-grid" style="max-width: 800px; margin-top: 20px;">
+            <div class="b-card" onclick="switchScreen('lobby-screen')" style="align-items: center; text-align: center; padding: 40px 20px;">
+                <div class="b-icon" style="margin-bottom: 20px;"><i class="fa-solid fa-plus"></i></div>
+                <div class="b-title">СОЗДАТЬ МАТЧ</div><div class="b-desc">Вы получите код комнаты для друга.</div>
+            </div>
+            <div class="b-card" onclick="switchScreen('join-screen')" style="align-items: center; text-align: center; padding: 40px 20px;">
+                <div class="b-icon" style="margin-bottom: 20px;"><i class="fa-solid fa-arrow-right-to-bracket"></i></div>
+                <div class="b-title">ВОЙТИ ПО КОДУ</div><div class="b-desc">Подключитесь, введя готовый код.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- === 3. ЛОББИ "СОЗДАТЬ МАТЧ" === -->
+<div id="lobby-screen" class="screen">
+    <div class="modal-header">
+        <div class="modal-back" onclick="switchScreen('friend-options-screen')"><i class="fa-solid fa-arrow-left"></i></div>
+        <div class="modal-title">ОЖИДАНИЕ</div>
+    </div>
+    <div class="content-wrapper">
+        <div class="lobby-container">
+            <div class="room-code-box" onclick="copyRoomCode(this)">
+                <div class="room-code-hint">Нажми, чтобы скопировать</div>
+                <span id="room-code-text">#S5R4Y</span>
+            </div>
+            <div class="vs-block">
+                <div class="player-col">
+                    <div class="avatar-circle"><img src="https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg" alt="Club Logo"></div>
+                    <div class="player-name">DREAM TEAM</div>
+                </div>
+                <div class="vs-text">VS</div>
+                <div class="player-col">
+                    <div class="spinner-wrapper"><div class="spinner"></div></div>
+                    <div class="waiting-text">ОЖИДАНИЕ...</div>
+                </div>
+            </div>
+            <div class="lobby-hint">Пригласите друга, скинув ему код.</div>
+            <button class="btn-primary" style="margin-top:20px; font-size: 10px; padding: 10px 20px; opacity:0.5;" onclick="startGame('friend')">Тест: Запустить игру</button>
+        </div>
+    </div>
+</div>
+
+<!-- === 4. ЭКРАН "ВОЙТИ В МАТЧ" === -->
+<div id="join-screen" class="screen">
+    <div class="modal-header">
+        <div class="modal-back" onclick="switchScreen('friend-options-screen')"><i class="fa-solid fa-arrow-left"></i></div>
+        <div class="modal-title">ВВОД КОДА</div>
+    </div>
+    <div class="content-wrapper" style="justify-content: center; align-items: center; flex: 1; padding-bottom: 10vh;">
+        <div class="join-input-wrapper">
+            <h2 style="font-family: 'Montserrat'; font-weight: 800; text-transform: uppercase;">Код комнаты</h2>
+            <input type="text" class="join-input" id="joinCodeInput" placeholder="#XXXXX" maxlength="6">
+            <button class="btn-primary" onclick="joinMatch()">ВОЙТИ</button>
+        </div>
+    </div>
+</div>
+
+<!-- === 5. ЭКРАН ЗАГРУЗКИ С БОТОМ === -->
+<div id="bot-loading-screen" class="screen">
+    <div class="modal-header">
+        <div class="modal-back" onclick="switchScreen('play-menu-screen')"><i class="fa-solid fa-arrow-left"></i></div>
+        <div class="modal-title">ПОДГОТОВКА</div>
+    </div>
+    <div class="content-wrapper">
+        <div class="lobby-container">
+            <div class="vs-block" style="margin-top: 50px;">
+                <div class="player-col">
+                    <div class="avatar-circle"><img src="https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg" alt="Club"></div>
+                    <div class="player-name">DREAM TEAM</div>
+                </div>
+                <div class="vs-text">VS</div>
+                <div class="player-col">
+                    <div class="avatar-circle bot"><i class="fa-solid fa-robot"></i></div>
+                    <div class="player-name" id="bot-random-name">BOT_3</div>
+                </div>
+            </div>
+            <div class="lobby-hint" style="margin-top: 20px;">Подготовка игрового поля...</div>
+            <div class="spinner-wrapper" style="margin-top: -20px;"><div class="spinner"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- === 6. САМО ИГРОВОЕ ПОЛЕ (МАТЧ) === -->
+<div id="game-board-screen" class="screen">
+    <div class="modal-header" style="background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);">
+        <!-- Кнопка побега -->
+        <div class="modal-back" onclick="forceSurrender()"><i class="fa-solid fa-flag"></i></div>
+        <div class="modal-title" id="game-mode-title">МАТЧ</div>
+    </div>
+    
+    <div class="content-wrapper" style="padding-top: 70px;">
+        <div class="game-board">
+            
+            <!-- Ряд Противника: ПЛОСКИЙ (без наслоений), СКРОЛЛИТСЯ НА ТЕЛЕФОНАХ -->
+            <div class="opponent-row" id="opponent-cards"></div>
+
+            <!-- Игровой стол -->
+            <div class="center-zone">
+                <div class="scoreboard">
+                    <div class="score-name" id="opponent-score-name">OPPONENT</div>
+                    <div class="score-numbers"><span class="score-box" id="score-opp">0</span> - <span class="score-box" id="score-plr">0</span></div>
+                    <div class="score-name player">DREAM TEAM</div>
+                </div>
+                
+                <div class="table-slots">
+                    <div class="card-slot" id="slot-opp"></div> <!-- Карта противника -->
+                    <div class="card-slot highlight" id="slot-plr"></div> <!-- Карта игрока -->
+                </div>
+            </div>
+
+            <!-- Ряд Игрока: ПЛОСКИЙ (без наслоений), СКРОЛЛИТСЯ -->
+            <div class="player-row" id="player-cards"></div>
+            
+        </div>
+    </div>
+
+    <!-- Модалка конца матча -->
+    <div class="end-modal" id="match-end-modal">
+        <div class="end-title" id="end-title-text">ПОБЕДА</div>
+        <div class="end-reward" id="end-reward-text" style="color: #fff;"></div>
+        <button class="btn-primary" onclick="closeMatchEnd()">В ГЛАВНОЕ МЕНЮ</button>
+    </div>
+</div>
+
+<script>
+    // === ДАННЫЕ ПРОФИЛЯ ===
+    let gameData = JSON.parse(localStorage.getItem('footsProfileData')) || { coins: 50000 };
+    function updateUI() { document.getElementById('ui-global-coins').innerText = formatNum(gameData.coins); }
+    function formatNum(n) { return n >= 1000000 ? (n/1000000).toFixed(1)+'M' : (n >= 1000 ? (n/1000).toFixed(1)+'K' : n); }
+    function saveAndUpdate() { localStorage.setItem('footsProfileData', JSON.stringify(gameData)); updateUI(); }
+    updateUI();
+
+    // === ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ ===
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => {
+            s.style.opacity = 0;
+            setTimeout(() => s.classList.remove('active'), 300);
+        });
+        setTimeout(() => {
+            let active = document.getElementById(screenId);
+            active.classList.add('active');
+            setTimeout(() => active.style.opacity = 1, 50);
+        }, 300);
+    }
+
+    // === КОД КОМНАТЫ ===
+    function copyRoomCode(element) {
+        let text = element.querySelector('#room-code-text').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            let hint = element.querySelector('.room-code-hint');
+            let orig = hint.innerText;
+            hint.innerText = "СКОПИРОВАНО!";
+            hint.style.color = "#4CAF50";
+            setTimeout(() => { hint.innerText = orig; hint.style.color = "rgba(255,255,255,0.4)"; }, 2000);
+        });
+    }
+
+    function joinMatch() {
+        let input = document.getElementById('joinCodeInput');
+        if(input.value.trim().length >= 5) {
+            input.value = '';
+            startGame('friend_guest');
+        } else alert("Введите код (мин 5 символов)");
+    }
+
+    function startBotMatch() {
+        let botId = Math.floor(Math.random() * 999) + 1;
+        document.getElementById('bot-random-name').innerText = `BOT_${botId}`;
+        switchScreen('bot-loading-screen');
+        setTimeout(() => startGame('bot'), 2500);
+    }
+
+    // === ИГРОВАЯ ЛОГИКА (БЕЗ НАСЛОЕНИЙ С АВАТАРОМ-МАНЕКЕНОМ) ===
+    const CARDS_DB = [
+        { name: "DAVIS", rating: 65, type: "brown" },
+        { name: "ROMERO",rating: 70, type: "brown" },
+        { name: "SILVA", rating: 82, type: "blue" },
+        { name: "ALVES", rating: 85, type: "blue" },
+        { name: "KING",  rating: 94, type: "red" },
+        { name: "MESSI", rating: 99, type: "red" }
+    ];
+
+    let currentMode = 'bot';
+    let pScore = 0;
+    let oScore = 0;
+    let cardsPlayed = 0;
+    let isRoundActive = false;
+
+    // Вставляемая иконка СЕРЕБРЯНОЙ (БЕЛОЙ) SVG монетки
+    const svgCoinHTML = `<svg class="svg-coin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v6c0 1.5 2.5 2.5 5 2.5s5-1 5-2.5V9" fill="#cccccc" stroke="#000" stroke-width="1.5"/><ellipse cx="17" cy="9" rx="5" ry="2.5" fill="#e6e6e6" stroke="#000" stroke-width="1.5"/><path d="M12 5v4c0 1.5 2.5 2.5 5 2.5s5-1 5-2.5V5" fill="#cccccc" stroke="#000" stroke-width="1.5"/><ellipse cx="17" cy="5" rx="5" ry="2.5" fill="#ffffff" stroke="#000" stroke-width="1.5"/><path d="M3 13v5c0 1.5 3 2.5 6 2.5s6-1 6-2.5v-5" fill="#cccccc" stroke="#000" stroke-width="1.5"/><ellipse cx="9" cy="13" rx="6" ry="2.5" fill="#e6e6e6" stroke="#000" stroke-width="1.5"/><path d="M3 9v4c0 1.5 3 2.5 6 2.5s6-1 6-2.5V9" fill="#cccccc" stroke="#000" stroke-width="1.5"/><ellipse cx="9" cy="9" rx="6" ry="2.5" fill="#ffffff" stroke="#000" stroke-width="1.5"/></svg>`;
+
+    function startGame(mode) {
+        currentMode = (mode === 'bot') ? 'bot' : 'friend';
+        
+        if(currentMode === 'bot') {
+            document.getElementById('game-mode-title').innerText = "ТРЕНИРОВКА";
+            document.getElementById('opponent-score-name').innerText = document.getElementById('bot-random-name').innerText;
+        } else {
+            document.getElementById('game-mode-title').innerText = "ИГРА С ДРУГОМ";
+            document.getElementById('opponent-score-name').innerText = "OPPONENT";
+        }
+
+        pScore = 0; oScore = 0; cardsPlayed = 0; isRoundActive = false;
+        document.getElementById('score-opp').innerText = "0";
+        document.getElementById('score-plr').innerText = "0";
+        document.getElementById('slot-opp').innerHTML = "";
+        document.getElementById('slot-plr').innerHTML = "";
+        document.getElementById('match-end-modal').classList.remove('active');
+
+        // Генерируем 8 открытых карт Игрока (Дизайн с Аватаром 3D)
+        let playerRow = document.getElementById('player-cards');
+        playerRow.innerHTML = "";
+        for(let i=0; i<8; i++) {
+            let card = CARDS_DB[Math.floor(Math.random() * CARDS_DB.length)];
+            let div = document.createElement('div');
+            div.className = `fut-card ${card.type}`;
+            div.innerHTML = `
+                <div class="fut-rating">${card.rating}</div>
+                <div class="fut-player-img"><svg viewBox="0 0 100 120"><use href="#dummy-avatar"></use></svg></div>
+                <div class="fut-bottom"><span class="fut-name">${card.name}</span></div>
+            `;
+            // Событие нажатия (бросок)
+            div.onclick = function() { playRound(this, card.rating); };
+            playerRow.appendChild(div);
+        }
+
+        // Генерируем 8 Рубашек противника
+        let oppRow = document.getElementById('opponent-cards');
+        oppRow.innerHTML = "";
+        for(let i=0; i<8; i++) {
+            let back = document.createElement('div');
+            back.className = "card-back";
+            oppRow.appendChild(back);
+        }
+
+        switchScreen('game-board-screen');
+    }
+
+    // ЛОГИКА РАУНДА (БРОСОК + ПЕРЕВОРОТ КАРТЫ ПРОТИВНИКА)
+    function playRound(playerCardElement, pRating) {
+        if(isRoundActive) return;
+        isRoundActive = true;
+
+        // 1. Игрок кладет карту
+        let slotPlr = document.getElementById('slot-plr');
+        slotPlr.innerHTML = ''; 
+        playerCardElement.style.pointerEvents = "none"; 
+        slotPlr.appendChild(playerCardElement);
+
+        // 2. Убираем одну рубашку у противника
+        let oppHand = document.getElementById('opponent-cards');
+        if(oppHand.children.length > 0) oppHand.removeChild(oppHand.lastElementChild);
+
+        // 3. Выбор случайной карты для Бота
+        let oppData = CARDS_DB[Math.floor(Math.random() * CARDS_DB.length)];
+        let oRating = oppData.rating;
+
+        // 4. Помещаем 3D-анимированную карту в слот противника
+        let slotOpp = document.getElementById('slot-opp');
+        slotOpp.innerHTML = `
+            <div class="flip-container" id="current-flip" style="width:100%;height:100%;">
+                <div class="flip-inner">
+                    <div class="flip-front card-back" style="width:100%;height:100%;"></div>
+                    <div class="flip-back fut-card ${oppData.type}" style="width:100%;height:100%;box-shadow:none;">
+                        <div class="fut-rating">${oRating}</div>
+                        <div class="fut-player-img"><svg viewBox="0 0 100 120"><use href="#dummy-avatar"></use></svg></div>
+                        <div class="fut-bottom"><span class="fut-name">${oppData.name}</span></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // 5. Анимация переворота
+        setTimeout(() => {
+            document.getElementById('current-flip').classList.add('flipped');
+
+            // 6. Подсчет очков после завершения 3D вращения
+            setTimeout(() => {
+                if(pRating > oRating) pScore++;
+                else if (oRating > pRating) oScore++;
+                
+                document.getElementById('score-plr').innerText = pScore;
+                document.getElementById('score-opp').innerText = oScore;
+
+                cardsPlayed++;
+
+                if(cardsPlayed >= 8) {
+                    setTimeout(showMatchResult, 1000);
+                } else {
+                    setTimeout(() => {
+                        slotPlr.innerHTML = "";
+                        slotOpp.innerHTML = "";
+                        isRoundActive = false;
+                    }, 1200);
+                }
+            }, 800);
+        }, 500);
+    }
+
+    // ИТОГИ МАТЧА
+    function showMatchResult() {
+        let modal = document.getElementById('match-end-modal');
+        let title = document.getElementById('end-title-text');
+        let reward = document.getElementById('end-reward-text');
+        
+        let coinsDiff = 0;
+        reward.style.display = "flex"; 
+
+        if (pScore > oScore) {
+            title.innerText = "ПОБЕДА";
+            title.className = "end-title win";
+            coinsDiff = (currentMode === 'bot') ? 1000 : 2000;
+            reward.innerHTML = `${svgCoinHTML} +${coinsDiff}`;
+            reward.style.color = "#4CAF50";
+        } else if (oScore > pScore) {
+            title.innerText = "ПОРАЖЕНИЕ";
+            title.className = "end-title lose";
+            coinsDiff = -500;
+            reward.innerHTML = `${svgCoinHTML} ${coinsDiff}`;
+            reward.style.color = "#F44336";
+        } else {
+            // Для ничьей выводим ТОЛЬКО одно слово НИЧЬЯ
+            title.innerText = "НИЧЬЯ";
+            title.className = "end-title draw";
+            reward.innerHTML = ``;
+            reward.style.display = "none";
+        }
+
+        gameData.coins += coinsDiff;
+        if(gameData.coins < 0) gameData.coins = 0; 
+        saveAndUpdate();
+
+        modal.classList.add('active');
+    }
+
+    function closeMatchEnd() {
+        switchScreen('play-menu-screen');
+    }
+
+    function forceSurrender() {
+        if(confirm("Вы уверены, что хотите покинуть матч? Вам будет засчитано техническое поражение (-500 монет).")) {
+            gameData.coins -= 500;
+            if(gameData.coins < 0) gameData.coins = 0;
+            saveAndUpdate();
+            switchScreen('play-menu-screen');
+        }
+    }
+</script>
+
+</body>
+</html>
