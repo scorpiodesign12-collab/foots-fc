@@ -137,16 +137,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #050505; f
 
 /* Оформление карточек под цвет рубашки */
 .fut-card.brown { border-color: #cd853f; background: url('https://i.ibb.co/5gv5RPkD/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(205,127,50,0.5); }
-.fut-card.brown:hover { box-shadow: 0 0 25px rgba(205,127,50,0.9); }
-
+.fut-card.brown:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.8), 0 0 15px rgba(205,127,50,0.7); }
 .fut-card.blue { border-color: #1e90ff; background: url('https://i.ibb.co/0ypNsDHR/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(0,150,255,0.5); }
-.fut-card.blue:hover { box-shadow: 0 0 25px rgba(0,150,255,0.9); }
-
+.fut-card.blue:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.8), 0 0 15px rgba(0,150,255,0.7); }
 .fut-card.red { border-color: #ff4500; background: url('https://i.ibb.co/pjN8ns3X/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(255,50,50,0.5); }
-.fut-card.red:hover { box-shadow: 0 0 25px rgba(255,50,50,0.9); }
-
+.fut-card.red:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.8), 0 0 15px rgba(255,50,50,0.7); }
 .fut-card.violet { border-color: #a020f0; background: url('https://i.ibb.co/b0Dv2GN/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(160,32,240,0.5); }
-.fut-card.violet:hover { box-shadow: 0 0 25px rgba(160,32,240,0.9); }
+.fut-card.violet:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.8), 0 0 15px rgba(160,32,240,0.7); }
 
 /* Рубашка карт FOOTS CARDS */
 .card-back { background: repeating-linear-gradient(-45deg, #111, #111 8px, #1a1a1a 8px, #1a1a1a 16px); display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -301,7 +298,7 @@ const _sess = getSession();
             <p style="margin: 0 auto;">Создай свою комнату или присоединись к существующей.</p>
         </div>
         <div class="cards-grid" style="max-width: 800px; margin-top: 20px;">
-            <div class="b-card" onclick="switchScreen('lobby-screen')" style="align-items: center; text-align: center; padding: 40px 20px;">
+            <div class="b-card" onclick="switchScreen('lobby-screen');openLobby();" style="align-items: center; text-align: center; padding: 40px 20px;">
                 <div class="b-icon" style="margin-bottom: 20px;"><i class="fa-solid fa-plus"></i></div>
                 <div class="b-title">СОЗДАТЬ МАТЧ</div><div class="b-desc">Вы получите код комнаты для друга.</div>
             </div>
@@ -426,14 +423,14 @@ const _sess = getSession();
 
 <script>
     // === ДАННЫЕ ПРОФИЛЯ ===
-    let gameData = { coins: _sess ? (_sess.coins||50000) : 50000 };
-    // Load fresh coins from Supabase
+    let gameData = { coins: _sess ? (_sess.coins||0) : 0 };
+    // Always load fresh coins from Supabase
     (async()=>{
       const {data} = await db.from('profiles').select('coins').eq('id',_sess.id).single();
       if(data){ gameData.coins = data.coins; updateUI(); }
     })();
     function updateUI() { document.getElementById('ui-global-coins').innerText = formatNum(gameData.coins); }
-    function formatNum(n) { return n>=1e6?(n/1e6).toFixed(1).replace('.0','')+'M':n>=1000?(n/1000).toFixed(1).replace('.0','')+'K':n; }
+    function formatNum(n) { return n>=1e6?(n/1e6).toFixed(1).replace('.0','')+'M':n>=1000?(n/1000).toFixed(1).replace('.0','')+'K':String(n); }
     function saveAndUpdate() {
       updateUI();
       // Sync session coins
@@ -486,57 +483,7 @@ const _sess = getSession();
         });
     }
 
-    // === МУЛЬТИПЛЕЕР: УПРАВЛЕНИЕ КОМНАТАМИ ===
-    let currentRoomCode = null;
-    let roomSubscription = null;
-    let myPlayerRole = null; // 'host' or 'guest'
-
-    function genRoomCode() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let code = '';
-        for(let i=0;i<5;i++) code += chars[Math.floor(Math.random()*chars.length)];
-        return '#' + code;
-    }
-
-    async function createRoom() {
-        const sess = getSession();
-        if(!sess) return;
-        currentRoomCode = genRoomCode();
-        myPlayerRole = 'host';
-        document.getElementById('room-code-text').innerText = currentRoomCode;
-        // Сохранить комнату в Supabase
-        await db.from('rooms').upsert({
-            code: currentRoomCode,
-            host_id: sess.id,
-            host_name: sess.username,
-            guest_id: null,
-            guest_name: null,
-            status: 'waiting'
-        });
-        // Подписаться на изменения комнаты
-        if(roomSubscription) roomSubscription.unsubscribe();
-        roomSubscription = db.channel('room:' + currentRoomCode)
-            .on('postgres_changes', {event:'UPDATE', schema:'public', table:'rooms', filter:`code=eq.${currentRoomCode}`},
-                payload => {
-                    const row = payload.new;
-                    if(row.guest_id && row.status === 'waiting') {
-                        // Гость подключился!
-                        const oppCol = document.querySelector('#lobby-screen .player-col:last-child');
-                        oppCol.innerHTML = `
-                            <div class="avatar-circle bot"><i class="fa-solid fa-user"></i></div>
-                            <div class="player-name">${row.guest_name.toUpperCase()}</div>
-                        `;
-                        // Через 1 сек запускаем игру
-                        setTimeout(async() => {
-                            await db.from('rooms').update({status:'playing'}).eq('code', currentRoomCode);
-                            startGame('friend');
-                        }, 1000);
-                    }
-                })
-            .subscribe();
-    }
-
-    async function joinMatch() {
+    function joinMatch() {
         let input = document.getElementById('joinCodeInput');
         const code = input.value.trim().toUpperCase();
         if(!code || code.length < 5) { alert('Введите код (мин 5 символов)'); return; }
@@ -544,50 +491,98 @@ const _sess = getSession();
         const sess = getSession();
         if(!sess) return;
 
-        const {data:room, error} = await db.from('rooms').select('*').eq('code', fullCode).eq('status','waiting').single();
-        if(error || !room) { alert('Комната не найдена или уже занята. Проверьте код.'); return; }
-        if(room.host_id === sess.id) { alert('Нельзя подключиться к своей комнате.'); return; }
+        (async()=>{
+            const {data:room, error} = await db.from('rooms').select('*').eq('code', fullCode).eq('status','waiting').single();
+            if(error || !room) { alert('Комната не найдена или уже занята. Проверьте код.'); return; }
+            if(room.host_id === sess.id) { alert('Нельзя подключиться к своей комнате.'); return; }
 
-        // Обновить комнату — гость подключился
-        await db.from('rooms').update({
-            guest_id: sess.id,
-            guest_name: sess.username
-        }).eq('code', fullCode);
+            await db.from('rooms').update({guest_id: sess.id, guest_name: sess.username}).eq('code', fullCode);
 
-        currentRoomCode = fullCode;
-        myPlayerRole = 'guest';
-        input.value = '';
+            input.value = '';
+            currentRoomCode = fullCode;
+            myPlayerRole = 'guest';
 
-        // Подписаться на статус — ждём когда хост запустит игру
-        if(roomSubscription) roomSubscription.unsubscribe();
-        roomSubscription = db.channel('room-guest:' + fullCode)
-            .on('postgres_changes', {event:'UPDATE', schema:'public', table:'rooms', filter:`code=eq.${fullCode}`},
-                payload => {
-                    if(payload.new.status === 'playing') {
-                        startGame('friend');
-                    }
-                })
-            .subscribe();
+            // Показать экран загрузки с именем хоста
+            document.getElementById('bot-random-name').innerText = room.host_name.toUpperCase();
+            switchScreen('bot-loading-screen');
+            document.querySelector('#bot-loading-screen .modal-title').innerText = 'ПОДКЛЮЧЕНИЕ...';
 
-        // Показать экран ожидания с именем хоста
-        switchScreen('bot-loading-screen');
-        document.getElementById('bot-random-name').innerText = room.host_name.toUpperCase();
-        document.getElementById('game-mode-title').innerText = 'ПОДКЛЮЧЕНИЕ...';
+            // Подписаться на статус playing
+            if(roomSubscription) { roomSubscription.unsubscribe(); roomSubscription = null; }
+            roomSubscription = db.channel('room-guest-' + fullCode)
+                .on('postgres_changes', {event:'UPDATE', schema:'public', table:'rooms', filter:'code=eq.'+fullCode},
+                    payload => {
+                        if(payload.new.status === 'playing') {
+                            if(roomSubscription){ roomSubscription.unsubscribe(); roomSubscription=null; }
+                            startGame('friend');
+                        }
+                    })
+                .subscribe();
+        })();
     }
 
-    // Вызывать createRoom при переходе на экран лобби
-    const _origSwitchScreen = switchScreen;
-    function switchScreen(screenId) {
-        _origSwitchScreen(screenId);
-        if(screenId === 'lobby-screen') {
-            // Инициализировать данные хоста
-            const s = getSession();
-            if(s) {
-                document.getElementById('my-name-display').innerText = s.username.toUpperCase();
-                const clubSrc = CLUBS[s.club]||CLUBS[0];
-                document.getElementById('my-club-logo').src = clubSrc;
+    // === КОМНАТЫ ДЛЯ МАТЧА С ДРУГОМ ===
+    let currentRoomCode = null;
+    let roomSubscription = null;
+    let myPlayerRole = null;
+
+    function genRoomCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '#';
+        for(let i=0;i<5;i++) code += chars[Math.floor(Math.random()*chars.length)];
+        return code;
+    }
+
+    async function openLobby() {
+        const sess = getSession();
+        if(sess) {
+            document.getElementById('my-name-display').innerText = sess.username.toUpperCase();
+            document.getElementById('my-club-logo').src = CLUBS[sess.club]||CLUBS[0];
+        }
+        // Очистить старую подписку
+        if(roomSubscription) { roomSubscription.unsubscribe(); roomSubscription = null; }
+
+        currentRoomCode = genRoomCode();
+        myPlayerRole = 'host';
+        document.getElementById('room-code-text').innerText = currentRoomCode;
+
+        // Удалить старые комнаты этого хоста и создать новую
+        if(sess) {
+            try {
+                await db.from('rooms').delete().eq('host_id', sess.id);
+                await db.from('rooms').insert({
+                    code: currentRoomCode,
+                    host_id: sess.id,
+                    host_name: sess.username,
+                    guest_id: null,
+                    guest_name: null,
+                    status: 'waiting'
+                });
+            } catch(e) {
+                console.warn('rooms table not available:', e);
+                document.getElementById('room-code-text').innerText = '⚠ создай таблицу rooms в Supabase';
             }
-            createRoom();
+
+            roomSubscription = db.channel('room-host-' + currentRoomCode)
+                .on('postgres_changes', {event:'UPDATE', schema:'public', table:'rooms', filter:'code=eq.'+currentRoomCode},
+                    payload => {
+                        const row = payload.new;
+                        if(row.guest_id && row.status === 'waiting') {
+                            // Гость подключился — показать его имя
+                            const oppCol = document.querySelector('#lobby-screen .player-col:last-child');
+                            if(oppCol) oppCol.innerHTML = `
+                                <div class="avatar-circle" style="background:#1a1a1a;"><i class="fa-solid fa-user" style="font-size:28px;color:#aaa;"></i></div>
+                                <div class="player-name">${row.guest_name.toUpperCase()}</div>
+                            `;
+                            // Через 1.5с запустить игру
+                            setTimeout(async()=>{
+                                if(roomSubscription){ roomSubscription.unsubscribe(); roomSubscription=null; }
+                                await db.from('rooms').update({status:'playing'}).eq('code', currentRoomCode);
+                                startGame('friend');
+                            }, 1500);
+                        }
+                    })
+                .subscribe();
         }
     }
 

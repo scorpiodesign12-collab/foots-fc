@@ -285,7 +285,12 @@ const _sess = getSession();
 </div>
 
 <script>
-let currentCoins = _sess ? (_sess.coins||10000) : 10000;
+let currentCoins = _sess ? (_sess.coins||0) : 0;
+// Load fresh coins from Supabase
+(async()=>{
+    const {data} = await db.from('profiles').select('coins').eq('id',_sess.id).single();
+    if(data){ currentCoins = data.coins; updateCoinsUI(); }
+})();
 const allNames = ["Smith","Jones","Williams","Brown","Taylor","Davies","Evans","Thomas","Roberts","Walker","White","Harris","Martin","Clark"];
 let availableNames = [...allNames];
 
@@ -669,22 +674,19 @@ function updateAllPlayersSection() {
     const container = document.getElementById('all-players-content');
     const allCards = document.querySelectorAll('#pitch-grid .card, #reserve-grid .card');
     if (!allCards.length) {
+        container.className = 'empty-panel all-players-content';
         container.innerHTML = 'Здесь пока ничего нет';
-        container.style.cssText = '';
         return;
     }
+    container.className = 'all-players-content';
+    container.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;padding:15px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:15px;';
     container.innerHTML = '';
-    container.style.cssText = 'display:flex;flex-wrap:wrap;gap:15px;padding:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:15px;';
     allCards.forEach(c => {
-        const wrap = document.createElement('div');
-        wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;';
         const clone = c.cloneNode(true);
-        clone.style.cssText = 'width:90px;height:120px;pointer-events:none;flex-shrink:0;';
+        clone.style.cssText = 'width:90px;height:120px;pointer-events:none;flex-shrink:0;border-radius:10px;';
         clone.removeAttribute('draggable');
-        clone.querySelector('.card-rating').style.fontSize = '22px';
-        clone.querySelector('.card-name').style.fontSize = '10px';
-        wrap.appendChild(clone);
-        container.appendChild(wrap);
+        clone.removeAttribute('id');
+        container.appendChild(clone);
     });
 }
 
