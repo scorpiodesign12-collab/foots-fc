@@ -366,7 +366,8 @@ const fmt = n => n>=1e6?(n/1e6).toFixed(1).replace('.0','')+'M':n>=1000?(n/1000)
 let _saveTimer=null;
 const save = () => {
   // Save local non-critical state
-  localStorage.setItem('fmData_local', JSON.stringify({inv:G.inv,claimed:G.claimed,tl:G.tl}));
+  const _localKey = 'fmData_' + (_sess ? _sess.id : 'anon');
+  localStorage.setItem(_localKey, JSON.stringify({inv:G.inv,claimed:G.claimed,tl:G.tl}));
   // Save coins to Supabase (debounced)
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(async()=>{
@@ -377,9 +378,9 @@ const save = () => {
 // Load from Supabase on page start
 (async()=>{
   const {data:prof} = await db.from('profiles').select('coins,password,club').eq('id',_sess.id).single();
-  let limPack = null;
-  try { const r = await db.from('limited_packs').select('limit_remaining').eq('id','barca_potm').single(); limPack = r.data; } catch(e){}
-  let local = JSON.parse(localStorage.getItem('fmData_local')||'null');
+  const {data:limPack} = await db.from('limited_packs').select('limit_remaining').eq('id','barca_potm').single();
+  const _localKey = 'fmData_' + (_sess ? _sess.id : 'anon');
+  let local = JSON.parse(localStorage.getItem(_localKey)||'null');
   G.coins = prof ? prof.coins : 10000000;
   G.barcaLimit = limPack ? limPack.limit_remaining : 8;
   if(local){ G.inv=local.inv||{brown:0,blue:0,red:0}; G.claimed=local.claimed||false; G.tl=local.tl||86400; }
@@ -429,33 +430,13 @@ async function buyBarcaPack() {
   showPackOpening();
 }
 
-function addCardToSquad(playerName, rating) {
-    try {
-        let state = JSON.parse(localStorage.getItem('foots_state_v7')||'{"pitch":[],"reserve":[]}');
-        if(!state.pitch) state.pitch = [];
-        if(!state.reserve) state.reserve = [];
-        const newCard = {type:'card-red', rating: rating, name: playerName, upgrades:0};
-        // Try empty reserve slot first
-        let rIdx = state.reserve.findIndex(c=>!c);
-        if(rIdx !== -1) { state.reserve[rIdx] = newCard; }
-        else if(state.reserve.length < 4) { state.reserve.push(newCard); }
-        else {
-            // Try empty pitch slot
-            let pIdx = state.pitch.findIndex(c=>!c);
-            if(pIdx !== -1) { state.pitch[pIdx] = newCard; }
-            else { state.reserve.push(newCard); } // overflow
-        }
-        localStorage.setItem('foots_state_v7', JSON.stringify(state));
-    } catch(e) { console.error('addCardToSquad:', e); }
-}
-
 function showPackOpening() {
   const players = [
     {name:'Marcus Rashford', letter:'M', img:'https://i.ibb.co/fVGhnWbn/90.png'},
     {name:'Ferran Torres',   letter:'F', img:'https://i.ibb.co/q3z2rD58/90.png'},
     {name:'Lamine Yamal',   letter:'L', img:'https://i.ibb.co/hx0yfKYS/90.png'},
     {name:'Joan Garcia',    letter:'J', img:'https://i.ibb.co/bRCckQqS/90.png'},
-    {name:'Cubarsi',        letter:'C', img:'https://i.ibb.co/KjsJFXJH/90.png'},
+    {name:'Cubarsí',        letter:'C', img:'https://i.ibb.co/KjsJFXJH/90.png'},
     {name:'R. Lewandowski', letter:'R', img:'https://i.ibb.co/CsJRYZjn/90.png'},
     {name:'Dani Olmo',      letter:'D', img:'https://i.ibb.co/39x8hZDP/90.png'},
     {name:'Pedri',          letter:'P', img:'https://i.ibb.co/0yvCHXjK/90.png'}
@@ -493,7 +474,7 @@ function showPackOpening() {
         <img src="${p.img}" style="width:min(240px,65vw);border-radius:16px;display:block;box-shadow:0 20px 60px rgba(0,0,0,.8)">
       </div>
       <div class="fifa-name">${p.name}</div>
-      <button onclick="addCardToSquad('${p.name}',90);document.getElementById('pack-open-ov').remove();" style="margin-top:6px;background:#fff;color:#000;border:none;padding:14px 48px;border-radius:30px;font-size:14px;font-weight:800;letter-spacing:1px;cursor:pointer;text-transform:uppercase">В КОЛЛЕКЦИЮ</button>
+      <button onclick="document.getElementById('pack-open-ov').remove()" style="margin-top:6px;background:#fff;color:#000;border:none;padding:14px 48px;border-radius:30px;font-size:14px;font-weight:800;letter-spacing:1px;cursor:pointer;text-transform:uppercase">В КОЛЛЕКЦИЮ</button>
     </div>
   `;
   document.body.appendChild(ov);

@@ -136,14 +136,14 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #050505; f
 .fut-name { font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
 
 /* Оформление карточек под цвет рубашки */
-.fut-card.brown { border-color: #cd853f; background: url('https://i.ibb.co/5gv5RPkD/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(205,127,50,0.5); }
-.fut-card.brown:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.8), 0 0 15px rgba(205,127,50,0.7); }
-.fut-card.blue { border-color: #1e90ff; background: url('https://i.ibb.co/0ypNsDHR/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(0,150,255,0.5); }
-.fut-card.blue:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.8), 0 0 15px rgba(0,150,255,0.7); }
-.fut-card.red { border-color: #ff4500; background: url('https://i.ibb.co/pjN8ns3X/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(255,50,50,0.5); }
-.fut-card.red:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.8), 0 0 15px rgba(255,50,50,0.7); }
-.fut-card.violet { border-color: #a020f0; background: url('https://i.ibb.co/b0Dv2GN/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(160,32,240,0.5); }
-.fut-card.violet:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.8), 0 0 15px rgba(160,32,240,0.7); }
+.fut-card.brown { border-color: #B8860B; background: linear-gradient(135deg, #7a5a00 0%, #b8860b 45%, #d4af37 50%, #b8860b 55%, #5c4400 100%); }
+.fut-card.brown .fut-player-img svg { color: #d4af37; } /* Золотая футболка */
+
+.fut-card.blue { border-color: #1e90ff; background: linear-gradient(135deg, #001f3f 0%, #004080 45%, #1e90ff 50%, #004080 55%, #001020 100%); }
+.fut-card.blue .fut-player-img svg { color: #1e90ff; } /* Синяя футболка */
+
+.fut-card.red { border-color: #ff3333; background: linear-gradient(135deg, #3e0000 0%, #8b0000 45%, #ff3333 50%, #8b0000 55%, #2a0000 100%); }
+.fut-card.red .fut-player-img svg { color: #ff3333; } /* Красная футболка */
 
 /* Рубашка карт FOOTS CARDS */
 .card-back { background: repeating-linear-gradient(-45deg, #111, #111 8px, #1a1a1a 8px, #1a1a1a 16px); display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -298,7 +298,7 @@ const _sess = getSession();
             <p style="margin: 0 auto;">Создай свою комнату или присоединись к существующей.</p>
         </div>
         <div class="cards-grid" style="max-width: 800px; margin-top: 20px;">
-            <div class="b-card" onclick="switchScreen('lobby-screen');openLobby();" style="align-items: center; text-align: center; padding: 40px 20px;">
+            <div class="b-card" onclick="switchScreen('lobby-screen')" style="align-items: center; text-align: center; padding: 40px 20px;">
                 <div class="b-icon" style="margin-bottom: 20px;"><i class="fa-solid fa-plus"></i></div>
                 <div class="b-title">СОЗДАТЬ МАТЧ</div><div class="b-desc">Вы получите код комнаты для друга.</div>
             </div>
@@ -320,7 +320,7 @@ const _sess = getSession();
         <div class="lobby-container">
             <div class="room-code-box" onclick="copyRoomCode(this)">
                 <div class="room-code-hint">Нажми, чтобы скопировать</div>
-                <span id="room-code-text">...</span>
+                <span id="room-code-text">#S5R4Y</span>
             </div>
             <div class="vs-block">
                 <div class="player-col">
@@ -364,8 +364,8 @@ const _sess = getSession();
         <div class="lobby-container">
             <div class="vs-block" style="margin-top: 50px;">
                 <div class="player-col">
-                    <div class="avatar-circle"><img src="https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg" alt="Club"></div>
-                    <div class="player-name" id="my-name-display">-</div>
+                    <div class="avatar-circle"><img id="my-club-logo-bot" src="" alt="Club"></div>
+                    <div class="player-name" id="my-name-display-bot">-</div>
                 </div>
                 <div class="vs-text">VS</div>
                 <div class="player-col">
@@ -423,14 +423,14 @@ const _sess = getSession();
 
 <script>
     // === ДАННЫЕ ПРОФИЛЯ ===
-    let gameData = { coins: _sess ? (_sess.coins||0) : 0 };
-    // Always load fresh coins from Supabase
+    let gameData = { coins: _sess ? (_sess.coins||50000) : 50000 };
+    // Load fresh coins from Supabase
     (async()=>{
       const {data} = await db.from('profiles').select('coins').eq('id',_sess.id).single();
       if(data){ gameData.coins = data.coins; updateUI(); }
     })();
     function updateUI() { document.getElementById('ui-global-coins').innerText = formatNum(gameData.coins); }
-    function formatNum(n) { return n>=1e6?(n/1e6).toFixed(1).replace('.0','')+'M':n>=1000?(n/1000).toFixed(1).replace('.0','')+'K':String(n); }
+    function formatNum(n) { return n >= 1000000 ? (n/1000000).toFixed(1)+'M' : (n >= 1000 ? (n/1000).toFixed(1)+'K' : n); }
     function saveAndUpdate() {
       updateUI();
       // Sync session coins
@@ -447,10 +447,10 @@ const _sess = getSession();
       if(!s) return;
       const clubSrc = CLUBS[s.club]||CLUBS[0];
       const nm = s.username.toUpperCase();
-      ['my-name-display','my-name-display2'].forEach(id=>{
+      ['my-name-display','my-name-display2','my-name-display-bot'].forEach(id=>{
         const el=document.getElementById(id); if(el) el.innerText=nm;
       });
-      ['my-club-logo','my-club-logo2'].forEach(id=>{
+      ['my-club-logo','my-club-logo2','my-club-logo-bot'].forEach(id=>{
         const el=document.getElementById(id); if(el) el.src=clubSrc;
       });
       const sn=document.getElementById('my-score-name'); if(sn) sn.innerText=nm;
@@ -485,105 +485,10 @@ const _sess = getSession();
 
     function joinMatch() {
         let input = document.getElementById('joinCodeInput');
-        const code = input.value.trim().toUpperCase();
-        if(!code || code.length < 5) { alert('Введите код (мин 5 символов)'); return; }
-        const fullCode = code.startsWith('#') ? code : '#' + code;
-        const sess = getSession();
-        if(!sess) return;
-
-        (async()=>{
-            const {data:room, error} = await db.from('rooms').select('*').eq('code', fullCode).eq('status','waiting').single();
-            if(error || !room) { alert('Комната не найдена или уже занята. Проверьте код.'); return; }
-            if(room.host_id === sess.id) { alert('Нельзя подключиться к своей комнате.'); return; }
-
-            await db.from('rooms').update({guest_id: sess.id, guest_name: sess.username}).eq('code', fullCode);
-
+        if(input.value.trim().length >= 5) {
             input.value = '';
-            currentRoomCode = fullCode;
-            myPlayerRole = 'guest';
-
-            // Показать экран загрузки с именем хоста
-            document.getElementById('bot-random-name').innerText = room.host_name.toUpperCase();
-            switchScreen('bot-loading-screen');
-            document.querySelector('#bot-loading-screen .modal-title').innerText = 'ПОДКЛЮЧЕНИЕ...';
-
-            // Подписаться на статус playing
-            if(roomSubscription) { roomSubscription.unsubscribe(); roomSubscription = null; }
-            roomSubscription = db.channel('room-guest-' + fullCode)
-                .on('postgres_changes', {event:'UPDATE', schema:'public', table:'rooms', filter:'code=eq.'+fullCode},
-                    payload => {
-                        if(payload.new.status === 'playing') {
-                            if(roomSubscription){ roomSubscription.unsubscribe(); roomSubscription=null; }
-                            startGame('friend');
-                        }
-                    })
-                .subscribe();
-        })();
-    }
-
-    // === КОМНАТЫ ДЛЯ МАТЧА С ДРУГОМ ===
-    let currentRoomCode = null;
-    let roomSubscription = null;
-    let myPlayerRole = null;
-
-    function genRoomCode() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let code = '#';
-        for(let i=0;i<5;i++) code += chars[Math.floor(Math.random()*chars.length)];
-        return code;
-    }
-
-    async function openLobby() {
-        const sess = getSession();
-        if(sess) {
-            document.getElementById('my-name-display').innerText = sess.username.toUpperCase();
-            document.getElementById('my-club-logo').src = CLUBS[sess.club]||CLUBS[0];
-        }
-        // Очистить старую подписку
-        if(roomSubscription) { roomSubscription.unsubscribe(); roomSubscription = null; }
-
-        currentRoomCode = genRoomCode();
-        myPlayerRole = 'host';
-        document.getElementById('room-code-text').innerText = currentRoomCode;
-
-        // Удалить старые комнаты этого хоста и создать новую
-        if(sess) {
-            try {
-                await db.from('rooms').delete().eq('host_id', sess.id);
-                await db.from('rooms').insert({
-                    code: currentRoomCode,
-                    host_id: sess.id,
-                    host_name: sess.username,
-                    guest_id: null,
-                    guest_name: null,
-                    status: 'waiting'
-                });
-            } catch(e) {
-                console.warn('rooms table not available:', e);
-                document.getElementById('room-code-text').innerText = '⚠ создай таблицу rooms в Supabase';
-            }
-
-            roomSubscription = db.channel('room-host-' + currentRoomCode)
-                .on('postgres_changes', {event:'UPDATE', schema:'public', table:'rooms', filter:'code=eq.'+currentRoomCode},
-                    payload => {
-                        const row = payload.new;
-                        if(row.guest_id && row.status === 'waiting') {
-                            // Гость подключился — показать его имя
-                            const oppCol = document.querySelector('#lobby-screen .player-col:last-child');
-                            if(oppCol) oppCol.innerHTML = `
-                                <div class="avatar-circle" style="background:#1a1a1a;"><i class="fa-solid fa-user" style="font-size:28px;color:#aaa;"></i></div>
-                                <div class="player-name">${row.guest_name.toUpperCase()}</div>
-                            `;
-                            // Через 1.5с запустить игру
-                            setTimeout(async()=>{
-                                if(roomSubscription){ roomSubscription.unsubscribe(); roomSubscription=null; }
-                                await db.from('rooms').update({status:'playing'}).eq('code', currentRoomCode);
-                                startGame('friend');
-                            }, 1500);
-                        }
-                    })
-                .subscribe();
-        }
+            startGame('friend_guest');
+        } else alert("Введите код (мин 5 символов)");
     }
 
     function startBotMatch() {
@@ -607,12 +512,7 @@ const _sess = getSession();
         try {
             const state = JSON.parse(localStorage.getItem('foots_state_v7'));
             if(!state) return CARDS_DB_DEFAULT;
-            const typeMap = {'card-standard':'brown','card-blue':'blue','card-red':'red','card-violet':'violet'};
-            const all = [...(state.pitch||[]), ...(state.reserve||[])].filter(c=>c&&c.type&&c.name).map(c=>({
-                name: c.name,
-                rating: c.rating,
-                type: typeMap[c.type] || c.type
-            }));
+            const all = [...(state.pitch||[]), ...(state.reserve||[])].filter(c=>c&&c.type&&c.name);
             return all.length >= 4 ? all : CARDS_DB_DEFAULT;
         } catch(e) { return CARDS_DB_DEFAULT; }
     }
