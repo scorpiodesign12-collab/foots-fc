@@ -6,236 +6,179 @@
 <title>FOOTS FC | СОСТАВ</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Orbitron:wght@700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- Полифилл для Touch-устройств -->
 <script src="https://unpkg.com/drag-drop-touch"></script>
-
 <style>
-/* === БАЗОВЫЕ СТИЛИ === */
-*, *::before, *::after { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
-    -webkit-tap-highlight-color: transparent; 
-    outline: none;
-}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;outline:none}
+html,body{width:100%;height:100%;overflow-x:hidden;background:#050505;font-family:'Montserrat',sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:#0a0a0a;border-left:1px solid rgba(255,255,255,0.05)}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.4)}
+.dark-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(40,40,40,0.5) 0%,transparent 60%),linear-gradient(175deg,#050505 0%,#111 50%,#000 100%);z-index:-2}
+.header{position:sticky;top:0;padding:15px 25px;display:flex;align-items:center;justify-content:space-between;z-index:10;background:rgba(5,5,5,0.8);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.05)}
+.header-left{display:flex;align-items:center;gap:15px}
+.back-btn{background:rgba(255,255,255,0.08);border:none;color:#fff;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:background .2s;user-select:none}
+.back-btn:hover{background:rgba(255,255,255,0.15)}
+.header-title{font-size:18px;font-weight:800;letter-spacing:3px;text-transform:uppercase;user-select:none}
+.coins-display{background:rgba(20,20,20,0.9);border:1px solid rgba(255,255,255,0.15);border-radius:30px;padding:8px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(0,0,0,0.5),inset 0 0 10px rgba(255,255,255,0.05);user-select:none}
+.coins-display span{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:800;letter-spacing:1px}
+.coins-display i{font-size:18px;filter:drop-shadow(0 0 3px rgba(255,255,255,0.8))}
+.main-content{display:flex;flex-direction:row;align-items:flex-start;justify-content:center;gap:40px;padding:30px;max-width:1400px;margin:0 auto}
+.team-sidebar{display:flex;flex-direction:column;gap:20px;min-width:280px;width:320px}
+.team-rating-box{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:25px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:flex;flex-direction:column;align-items:center;gap:15px;user-select:none}
+.rating-label{font-size:14px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px}
+.shield-container{position:relative;width:100px;height:115px;display:flex;justify-content:center;align-items:center;filter:drop-shadow(0 5px 15px rgba(255,255,255,0.15))}
+.shield-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.rating-value{position:relative;font-family:'Orbitron',sans-serif;font-size:46px;font-weight:800;color:#000;z-index:2;margin-top:-10px}
+.upgrade-menu-btn{width:100%;background:#fff;color:#000;border:none;padding:18px;border-radius:12px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;letter-spacing:1px;cursor:pointer;transition:transform .2s,background .2s;box-shadow:0 4px 15px rgba(255,255,255,0.15);user-select:none}
+.upgrade-menu-btn:hover{transform:translateY(-2px);background:#f0f0f0;box-shadow:0 6px 20px rgba(255,255,255,0.25)}
+.upgrade-menu-btn:active{transform:translateY(1px)}
+.sell-zone-container{background:rgba(255,50,50,0.05);border:1px solid rgba(255,50,50,0.2);border-radius:20px;padding:20px;text-align:center;display:flex;flex-direction:column;gap:15px;user-select:none}
+.sell-title{font-size:11px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px}
+.sell-arena{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sell-drop-zone{width:90px;height:120px;border:2px dashed rgba(255,50,50,0.4);border-radius:12px;background:rgba(20,0,0,0.4);display:flex;justify-content:center;align-items:center;position:relative;transition:.3s}
+.sell-drop-zone.drag-over{background:rgba(255,50,50,0.2);border-color:#f33}
+.sell-drop-zone::before{content:'ИГРОК';position:absolute;color:rgba(255,255,255,0.2);font-weight:700;font-size:12px;z-index:0;pointer-events:none}
+/* Toast уведомление */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(255,50,50,0.95);color:#fff;padding:14px 24px;border-radius:12px;font-weight:700;font-size:14px;z-index:9999;transition:transform .3s ease,opacity .3s;opacity:0;pointer-events:none;text-align:center;white-space:nowrap;backdrop-filter:blur(10px);border:1px solid rgba(255,80,80,0.5)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.sell-drop-zone .card{z-index:2;width:100%;height:100%}
+.sell-arrow i{color:rgba(255,255,255,0.3);font-size:20px}
+.sell-info{display:flex;flex-direction:column;gap:10px;align-items:center;flex:1}
+.sell-price-display{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:800;display:flex;align-items:center;gap:8px}
+.sell-price-display i{font-size:18px}
+.action-sell-btn{background:#f33;color:#fff;border:none;padding:10px 20px;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:800;border-radius:8px;cursor:pointer;transition:.3s;opacity:.5;pointer-events:none;width:100%;text-transform:uppercase;user-select:none}
+.action-sell-btn.active{opacity:1;pointer-events:auto}
+.action-sell-btn.active:hover{background:#f11;transform:translateY(-2px);box-shadow:0 4px 15px rgba(255,50,50,0.4)}
+.mobile-toggle-btn{display:none;width:100%;background:rgba(255,255,255,0.05);color:#fff;border:1px solid rgba(255,255,255,0.1);padding:15px;border-radius:12px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:10px;transition:background .2s}
+.mobile-toggle-btn:active{background:rgba(255,255,255,0.1)}
+.pitch{background:rgba(20,20,20,0.6);border:1px solid rgba(255,255,255,0.05);border-radius:20px;padding:25px;width:100%;max-width:900px}
+.grid-4x2{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);gap:20px}
+.card-slot{width:100%;aspect-ratio:3/4;background:rgba(0,0,0,0.4);border:2px dashed rgba(255,255,255,0.1);border-radius:12px;position:relative}
+.card{width:100%;height:100%;border-radius:10px;position:relative;cursor:grab;display:flex;flex-direction:column;justify-content:space-between;user-select:none;transition:transform .2s,box-shadow .2s,opacity .5s;overflow:hidden;background-size:cover;background-position:center}
+.card:active{cursor:grabbing;transform:scale(1.05);z-index:100}
+.card.dragging{opacity:.4}
+.card.vanishing{transform:scale(0) rotate(180deg);opacity:0;pointer-events:none}
 
-html, body { 
-    width: 100%; 
-    height: 100%; 
-    overflow-x: hidden; 
-    background: #050505; 
-    font-family: 'Montserrat', sans-serif; 
-    color: #fff; 
-    -webkit-font-smoothing: antialiased; 
-}
+/* Карточки — фоны из внешних ссылок */
+.card-standard{background-color:rgba(139,69,19,0.5);border:1px solid rgba(205,127,50,0.5);box-shadow:0 0 10px rgba(205,127,50,0.5);background-image:url('https://i.ibb.co/5gv5RPkD/image.webp')}
+.card-standard:hover,.card-standard:active{box-shadow:0 0 25px rgba(205,127,50,0.9)}
+.card-blue{background-color:rgba(0,100,200,0.6);border:1px solid rgba(0,150,255,0.5);box-shadow:0 0 10px rgba(0,150,255,0.5);background-image:url('https://i.ibb.co/0ypNsDHR/image.webp')}
+.card-blue:hover,.card-blue:active{box-shadow:0 0 25px rgba(0,150,255,0.9)}
+.card-red{background-color:rgba(180,0,0,0.5);border:1px solid rgba(255,50,50,0.5);box-shadow:0 0 10px rgba(255,50,50,0.5);background-image:url('https://i.ibb.co/pjN8ns3X/image.webp')}
+.card-red:hover,.card-red:active{box-shadow:0 0 25px rgba(255,50,50,0.9)}
+.card-violet{background-color:rgba(90,0,180,0.5);border:1px solid rgba(160,32,240,0.5);box-shadow:0 0 10px rgba(160,32,240,0.5);background-image:url('https://i.ibb.co/b0Dv2GN/image.webp')}
+.card-violet:hover,.card-violet:active{box-shadow:0 0 25px rgba(160,32,240,0.9)}
 
-/* === КАСТОМНЫЙ СКРОЛЛБАР === */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #0a0a0a; border-left: 1px solid rgba(255,255,255,0.05); }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+.card-rating{position:absolute;top:10px;left:10px;font-family:'Orbitron',sans-serif;font-size:28px;font-weight:800;color:#fff;text-shadow:0 0 10px rgba(0,0,0,0.8),2px 2px 6px #000;z-index:2;line-height:1;transition:opacity .3s,transform .3s}
+.card-name{width:100%;text-align:center;font-size:14px;font-weight:800;text-transform:uppercase;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,0.85));padding:25px 4px 8px;letter-spacing:1px;z-index:2;backdrop-filter:blur(1px);position:absolute;bottom:0;left:0;right:0}
+.bottom-sections{padding:0 30px 40px;max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:30px;user-select:none}
+.section-header{font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:15px;display:flex;align-items:center;gap:10px}
+.section-header::before{content:'';display:block;width:4px;height:16px;background:#fff;border-radius:2px}
+.reserve-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;width:100%;max-width:900px}
+.empty-panel{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:15px;height:140px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font-size:16px;font-weight:500}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);z-index:1000;display:none;flex-direction:column;justify-content:space-between;padding:40px 20px}
+.modal-overlay.active{display:flex}
+.modal-header{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:900px;margin:0 auto;user-select:none}
+.modal-title{font-size:24px;font-weight:800;text-transform:uppercase;letter-spacing:3px}
+.close-btn{background:rgba(255,255,255,0.1);border:none;color:#fff;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:20px;transition:.2s}
+.close-btn:hover{background:rgba(255,50,50,0.8)}
+.upgrade-arena{display:flex;align-items:center;justify-content:center;gap:40px;margin:auto;max-width:900px;width:100%;user-select:none}
+.target-frame-wrap{display:flex;flex-direction:column;align-items:center;gap:25px}
+.target-frame{width:180px;height:240px;border:2px dashed rgba(255,255,255,0.3);border-radius:16px;display:flex;justify-content:center;align-items:center;background:rgba(255,255,255,0.05);position:relative}
+.target-frame .card{width:100%;height:100%;pointer-events:none;border-radius:14px}
+.target-frame .card-rating{font-size:34px;top:12px;left:12px}
+.target-frame .card-name{font-size:16px;padding:30px 4px 10px}
+.stat-box{display:flex;flex-direction:column;align-items:center;opacity:0;transition:opacity .3s;transform:translateY(20px);position:relative}
+.stat-box.visible{opacity:1;transform:translateY(0)}
+.stat-label{font-size:12px;text-transform:uppercase;color:rgba(255,255,255,0.5);letter-spacing:2px;margin-bottom:8px}
+.stat-val-white{font-family:'Orbitron',sans-serif;font-size:40px;font-weight:800;text-shadow:0 0 15px rgba(255,255,255,0.3)}
+.stat-val-cost{font-family:'Orbitron',sans-serif;font-size:36px;font-weight:800;display:flex;align-items:center;gap:10px}
+.stat-val-cost i{font-size:22px}
+.stat-val-cost.disabled{color:#888}
+.action-upgrade-btn{background:#fff;color:#000;border:none;padding:15px 40px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;text-transform:uppercase;border-radius:25px;cursor:pointer;transition:.3s;opacity:0;pointer-events:none;box-shadow:0 4px 15px rgba(255,255,255,0.15);user-select:none}
+.action-upgrade-btn.visible{opacity:1;pointer-events:auto}
+.action-upgrade-btn:hover:not(:disabled){transform:scale(1.05);background:#f0f0f0;box-shadow:0 6px 20px rgba(255,255,255,0.3)}
+.action-upgrade-btn:disabled{background:rgba(255,255,255,0.1);box-shadow:none;cursor:not-allowed;color:rgba(255,255,255,0.4)}
+.player-carousel-wrap{width:100%;max-width:1000px;margin:0 auto;background:rgba(255,255,255,0.03);border-radius:20px;padding:25px;border:1px solid rgba(255,255,255,0.05);user-select:none}
+.carousel-title{font-size:14px;text-transform:uppercase;color:rgba(255,255,255,0.5);letter-spacing:2px;margin-bottom:20px}
+.player-carousel{display:flex;gap:15px;overflow-x:auto;padding-bottom:10px}
+.player-carousel::-webkit-scrollbar{height:8px}
+.player-carousel::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:4px}
+.player-carousel .card{width:105px;height:140px;flex-shrink:0;cursor:pointer;transform-origin:bottom center;transition:.2s}
+.player-carousel .card-rating{font-size:20px;top:6px;left:6px}
+.player-carousel .card-name{font-size:11px;padding:20px 4px 6px}
+.player-carousel .card:hover{transform:scale(1.05);box-shadow:0 0 15px rgba(255,255,255,0.3)}
+@keyframes ratingUpdateAnim{0%{opacity:1;transform:scale(1);filter:blur(0)}40%{opacity:0;transform:scale(1.5);filter:blur(5px);color:#fff}60%{opacity:0;transform:scale(.5);filter:blur(5px);color:#fff;text-shadow:0 0 20px #fff}100%{opacity:1;transform:scale(1);filter:blur(0);color:#fff}}
+.rating-animating{animation:ratingUpdateAnim .8s ease-in-out forwards}
+.tutorial-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);backdrop-filter:blur(15px);z-index:2000;display:none;justify-content:center;align-items:center;padding:20px}
+.tutorial-overlay.active{display:flex}
+.tutorial-modal{background:rgba(15,15,15,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:20px;max-width:500px;width:100%;padding:40px;box-shadow:0 20px 50px rgba(0,0,0,0.8);text-align:center}
+.tutorial-title{font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:30px}
+.tutorial-list{display:flex;flex-direction:column;gap:15px;text-align:left;margin-bottom:30px}
+.tutorial-item{display:flex;align-items:center;gap:15px;font-size:14px;font-weight:500;color:rgba(255,255,255,0.8)}
+.tut-circle{width:24px;height:24px;border-radius:50%;flex-shrink:0}
+.tut-brown{background:rgba(139,69,19,0.8);border:2px solid #cd7f32;box-shadow:0 0 10px rgba(205,127,50,0.5)}
+.tut-blue{background:rgba(0,100,200,0.8);border:2px solid #09f;box-shadow:0 0 10px rgba(0,150,255,0.5)}
+.tut-red{background:rgba(180,0,0,0.8);border:2px solid #f33;box-shadow:0 0 10px rgba(255,50,50,0.5)}
+.tut-violet{background:rgba(90,0,180,0.8);border:2px solid #a020f0;box-shadow:0 0 10px rgba(160,32,240,0.5)}
+.tutorial-divider{width:100%;height:1px;background:rgba(255,255,255,0.1);margin:25px 0}
+.tutorial-desc{font-size:13px;line-height:1.6;color:rgba(255,255,255,0.6);margin-bottom:30px}
+.tutorial-btn{background:#fff;color:#000;border:none;padding:15px 40px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;border-radius:12px;cursor:pointer;transition:.2s;width:100%}
+.tutorial-btn:hover{background:#e0e0e0;transform:translateY(-2px)}
 
-/* === ФОН === */
-.dark-bg { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% -10%, rgba(40,40,40,0.5) 0%, transparent 60%), linear-gradient(175deg, #050505 0%, #111111 50%, #000000 100%); z-index: -2; }
+/* Логотип в шапке */
+.header-logo{height:36px;object-fit:contain}
 
-/* === ШАПКА И МОНЕТЫ === */
-.header { position: sticky; top: 0; padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; z-index: 10; background: rgba(5, 5, 5, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-.header-left { display: flex; align-items: center; gap: 15px; }
-.back-btn { background: rgba(255,255,255,0.08); border: none; color: #fff; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; transition: background 0.2s; user-select: none; }
-.back-btn:hover { background: rgba(255,255,255,0.15); }
-.header-title { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; user-select: none; }
-
-.coins-display { background: rgba(20, 20, 20, 0.9); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 30px; padding: 8px 20px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5), inset 0 0 10px rgba(255,255,255,0.05); user-select: none; }
-.coins-display span { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: 1px; color: #fff; }
-.coins-display i { color: #fff; font-size: 18px; filter: drop-shadow(0 0 3px rgba(255,255,255,0.8)); }
-
-/* === ОСНОВНОЙ КОНТЕНТ === */
-.main-content { display: flex; flex-direction: row; align-items: flex-start; justify-content: center; gap: 40px; padding: 30px; max-width: 1400px; margin: 0 auto; }
-
-/* РЕЙТИНГ И УСИЛЕНИЕ (Справа) */
-.team-sidebar { display: flex; flex-direction: column; gap: 20px; min-width: 280px; width: 320px; }
-.team-rating-box { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 25px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; gap: 15px; user-select: none;}
-.rating-label { font-size: 14px; font-weight: 700; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 2px; }
-
-/* SVG Щит Рейтинга */
-.shield-container { position: relative; width: 100px; height: 115px; display: flex; justify-content: center; align-items: center; filter: drop-shadow(0 5px 15px rgba(255,255,255,0.15)); }
-.shield-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.rating-value { position: relative; font-family: 'Orbitron', sans-serif; font-size: 46px; font-weight: 800; color: #000; z-index: 2; margin-top: -10px; }
-
-/* Кнопка Усиление */
-.upgrade-menu-btn { width: 100%; background: #ffffff; color: #000000; border: none; padding: 18px; border-radius: 12px; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: transform 0.2s, background 0.2s; box-shadow: 0 4px 15px rgba(255, 255, 255, 0.15); user-select: none; }
-.upgrade-menu-btn:hover { transform: translateY(-2px); background: #f0f0f0; box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25); }
-.upgrade-menu-btn:active { transform: translateY(1px); }
-
-/* ЗОНА ПРОДАЖИ */
-.sell-zone-container { background: rgba(255, 50, 50, 0.05); border: 1px solid rgba(255, 50, 50, 0.2); border-radius: 20px; padding: 20px; text-align: center; display: flex; flex-direction: column; gap: 15px; user-select: none; }
-.sell-title { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; }
-.sell-arena { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.sell-drop-zone { width: 90px; height: 120px; border: 2px dashed rgba(255, 50, 50, 0.4); border-radius: 12px; background: rgba(20,0,0,0.4); display: flex; justify-content: center; align-items: center; position: relative; transition: 0.3s; }
-.sell-drop-zone.drag-over { background: rgba(255,50,50,0.2); border-color: #ff3333; }
-.sell-drop-zone::before { content: 'ИГРОК'; position: absolute; color: rgba(255,255,255,0.2); font-weight: 700; font-size: 12px; z-index: 0; pointer-events: none; }
-.sell-drop-zone .card { z-index: 2; width: 100%; height: 100%; }
-.sell-arrow i { color: rgba(255,255,255,0.3); font-size: 20px; }
-.sell-info { display: flex; flex-direction: column; gap: 10px; align-items: center; flex: 1; }
-.sell-price-display { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px; }
-.sell-price-display i { color: #fff; font-size: 18px; }
-.action-sell-btn { background: #ff3333; color: #fff; border: none; padding: 10px 20px; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.3s; opacity: 0.5; pointer-events: none; width: 100%; text-transform: uppercase; user-select: none; }
-.action-sell-btn.active { opacity: 1; pointer-events: auto; }
-.action-sell-btn.active:hover { background: #ff1a1a; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255, 50, 50, 0.4); }
-
-/* КНОПКИ СВОРАЧИВАНИЯ НА ТЕЛЕФОНЕ (Скрыты на ПК) */
-.mobile-toggle-btn { display: none; width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 700; text-transform: uppercase; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; transition: background 0.2s;}
-.mobile-toggle-btn:active { background: rgba(255,255,255,0.1); }
-
-/* ПОЛЕ (Сетка карт) */
-.pitch { background: rgba(20, 20, 20, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 25px; width: 100%; max-width: 900px; }
-.grid-4x2 { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 20px; }
-
-/* === СЛОТЫ И КАРТОЧКИ === */
-.card-slot { width: 100%; aspect-ratio: 3 / 4; background: rgba(0, 0, 0, 0.4); border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 12px; position: relative; }
-.card { width: 100%; height: 100%; border-radius: 10px; position: relative; cursor: grab; display: flex; flex-direction: column; justify-content: space-between; user-select: none; transition: transform 0.2s, box-shadow 0.2s, opacity 0.5s; overflow: hidden; background-size: cover; background-position: center; }
-.card:active { cursor: grabbing; transform: scale(1.05); z-index: 100; }
-.card.dragging { opacity: 0.4; }
-.card.vanishing { transform: scale(0) rotate(180deg); opacity: 0; pointer-events: none; }
-
-/* === СВЕЧЕНИЕ КАРТ И ФОНЫ === */
-.card-standard { background-color: rgba(139, 69, 19, 0.5); border: 1px solid rgba(205, 127, 50, 0.5); box-shadow: 0 0 10px rgba(205, 127, 50, 0.5); background-image: url('data:image/webp;base64,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'); }
-.card-standard:hover, .card-standard:active { box-shadow: 0 0 25px rgba(205, 127, 50, 0.9); }
-
-.card-blue { background-color: rgba(0, 100, 200, 0.6); border: 1px solid rgba(0, 150, 255, 0.5); box-shadow: 0 0 10px rgba(0, 150, 255, 0.5); background-image: url('data:image/webp;base64,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'); }
-.card-blue:hover, .card-blue:active { box-shadow: 0 0 25px rgba(0, 150, 255, 0.9); }
-
-.card-red { background-color: rgba(180, 0, 0, 0.5); border: 1px solid rgba(255, 50, 50, 0.5); box-shadow: 0 0 10px rgba(255, 50, 50, 0.5); background-image: url('data:image/webp;base64,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'); }
-.card-red:hover, .card-red:active { box-shadow: 0 0 25px rgba(255, 50, 50, 0.9); }
-
-.card-violet { background-color: rgba(90, 0, 180, 0.5); border: 1px solid rgba(160, 32, 240, 0.5); box-shadow: 0 0 10px rgba(160, 32, 240, 0.5); background-image: url('data:image/webp;base64,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'); }
-.card-violet:hover, .card-violet:active { box-shadow: 0 0 25px rgba(160, 32, 240, 0.9); }
-
-/* Внутренности карточки */
-.card-rating { position: absolute; top: 10px; left: 10px; font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: 800; color: #ffffff; text-shadow: 0 0 10px rgba(0,0,0,0.8), 2px 2px 6px rgba(0,0,0,1); z-index: 2; line-height: 1; transition: opacity 0.3s, transform 0.3s; }
-.card-name { width: 100%; text-align: center; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,0.85)); padding: 25px 4px 8px; letter-spacing: 1px; z-index: 2; backdrop-filter: blur(1px); position: absolute; bottom: 0; left: 0; right: 0; }
-
-/* === НИЖНИЕ ПАНЕЛИ (ЗАПАС И ВСЕ ИГРОКИ) === */
-.bottom-sections { padding: 0 30px 40px 30px; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px; user-select: none; }
-.section-header { font-size: 16px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-.section-header::before { content: ''; display: block; width: 4px; height: 16px; background: #fff; border-radius: 2px; }
-.reserve-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; width: 100%; max-width: 900px; }
-.empty-panel { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 15px; height: 140px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-size: 16px; font-weight: 500; }
-
-/* === МОДАЛЬНОЕ ОКНО УСИЛЕНИЯ === */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); z-index: 1000; display: none; flex-direction: column; justify-content: space-between; padding: 40px 20px; }
-.modal-overlay.active { display: flex; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 900px; margin: 0 auto; user-select: none; }
-.modal-title { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 3px; color: #fff; }
-.close-btn { background: rgba(255,255,255,0.1); border: none; color: #fff; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 20px; transition: 0.2s; }
-.close-btn:hover { background: rgba(255,50,50,0.8); }
-
-/* Центральная часть модалки */
-.upgrade-arena { display: flex; align-items: center; justify-content: center; gap: 40px; margin: auto; max-width: 900px; width: 100%; user-select: none; }
-.target-frame-wrap { display: flex; flex-direction: column; align-items: center; gap: 25px; }
-.target-frame { width: 180px; height: 240px; border: 2px dashed rgba(255,255,255,0.3); border-radius: 16px; display: flex; justify-content: center; align-items: center; background: rgba(255,255,255,0.05); position: relative; }
-.target-frame .card { width: 100%; height: 100%; pointer-events: none; border-radius: 14px; }
-.target-frame .card-rating { font-size: 34px; top: 12px; left: 12px; }
-.target-frame .card-name { font-size: 16px; padding: 30px 4px 10px; }
-
-/* Статистика по бокам */
-.stat-box { display: flex; flex-direction: column; align-items: center; opacity: 0; transition: opacity 0.3s; transform: translateY(20px); position: relative; }
-.stat-box.visible { opacity: 1; transform: translateY(0); }
-.stat-label { font-size: 12px; text-transform: uppercase; color: rgba(255,255,255,0.5); letter-spacing: 2px; margin-bottom: 8px; }
-.stat-val-white { font-family: 'Orbitron', sans-serif; font-size: 40px; font-weight: 800; color: #ffffff; text-shadow: 0 0 15px rgba(255,255,255,0.3); }
-.stat-val-cost { font-family: 'Orbitron', sans-serif; font-size: 36px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; }
-.stat-val-cost i { font-size: 22px; color: #ffffff; }
-.stat-val-cost.disabled { color: #888888; }
-
-.action-upgrade-btn { background: #ffffff; color: #000000; border: none; padding: 15px 40px; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; text-transform: uppercase; border-radius: 25px; cursor: pointer; transition: 0.3s; opacity: 0; pointer-events: none; box-shadow: 0 4px 15px rgba(255, 255, 255, 0.15); user-select: none; }
-.action-upgrade-btn.visible { opacity: 1; pointer-events: auto; }
-.action-upgrade-btn:hover:not(:disabled) { transform: scale(1.05); background: #f0f0f0; box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3); }
-.action-upgrade-btn:disabled { background: rgba(255, 255, 255, 0.1); box-shadow: none; cursor: not-allowed; color: rgba(255, 255, 255, 0.4); }
-
-/* Карусель игроков внизу */
-.player-carousel-wrap { width: 100%; max-width: 1000px; margin: 0 auto; background: rgba(255,255,255,0.03); border-radius: 20px; padding: 25px; border: 1px solid rgba(255,255,255,0.05); user-select: none; }
-.carousel-title { font-size: 14px; text-transform: uppercase; color: rgba(255,255,255,0.5); letter-spacing: 2px; margin-bottom: 20px; }
-.player-carousel { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; }
-.player-carousel::-webkit-scrollbar { height: 8px; }
-.player-carousel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-.player-carousel .card { width: 105px; height: 140px; flex-shrink: 0; cursor: pointer; transform-origin: bottom center; transition: 0.2s; }
-.player-carousel .card-rating { font-size: 20px; top: 6px; left: 6px; }
-.player-carousel .card-name { font-size: 11px; padding: 20px 4px 6px; }
-.player-carousel .card:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(255,255,255,0.3); }
-
-/* Анимация обновления рейтинга */
-@keyframes ratingUpdateAnim {
-    0% { opacity: 1; transform: scale(1); filter: blur(0); }
-    40% { opacity: 0; transform: scale(1.5); filter: blur(5px); color: #fff; }
-    60% { opacity: 0; transform: scale(0.5); filter: blur(5px); color: #fff; text-shadow: 0 0 20px #fff; }
-    100% { opacity: 1; transform: scale(1); filter: blur(0); color: #fff; }
-}
-.rating-animating { animation: ratingUpdateAnim 0.8s ease-in-out forwards; }
-
-/* === ИНСТРУКЦИЯ (ОБУЧЕНИЕ) === */
-.tutorial-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 20px; }
-.tutorial-overlay.active { display: flex; }
-.tutorial-modal { background: rgba(15,15,15,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; max-width: 500px; width: 100%; padding: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); text-align: center; }
-.tutorial-title { font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #fff; margin-bottom: 30px; }
-.tutorial-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 30px; }
-.tutorial-item { display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.8); }
-.tut-circle { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
-.tut-brown { background: rgba(139, 69, 19, 0.8); border: 2px solid #cd7f32; box-shadow: 0 0 10px rgba(205, 127, 50, 0.5); }
-.tut-blue { background: rgba(0, 100, 200, 0.8); border: 2px solid #0096ff; box-shadow: 0 0 10px rgba(0, 150, 255, 0.5); }
-.tut-red { background: rgba(180, 0, 0, 0.8); border: 2px solid #ff3232; box-shadow: 0 0 10px rgba(255, 50, 50, 0.5); }
-.tut-violet { background: rgba(90, 0, 180, 0.8); border: 2px solid #a020f0; box-shadow: 0 0 10px rgba(160, 32, 240, 0.5); }
-.tutorial-divider { width: 100%; height: 1px; background: rgba(255,255,255,0.1); margin: 25px 0; }
-.tutorial-desc { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.6); margin-bottom: 30px; }
-.tutorial-btn { background: #ffffff; color: #000; border: none; padding: 15px 40px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; text-transform: uppercase; border-radius: 12px; cursor: pointer; transition: 0.2s; width: 100%; }
-.tutorial-btn:hover { background: #e0e0e0; transform: translateY(-2px); }
-
-
-/* === АДАПТАЦИЯ (ТЕЛЕФОН) === */
-@media (max-width: 800px) {
-    /* Меняем структуру на мобильном, убираем лишние отступы чтобы сделать карты больше */
-    .main-content { flex-direction: column; align-items: stretch; padding: 15px 4px; gap: 15px; }
-    .bottom-sections { padding: 10px 4px 30px; }
-    .team-sidebar { width: 100%; order: -1; }
-    .team-rating-box { width: 100%; flex-direction: row; justify-content: space-between; padding: 15px 20px; }
-    
-    /* Делаем карты поля МАКСИМАЛЬНО большими! Убрали отступы по бокам */
-    .pitch { padding: 6px 4px; border-radius: 12px; width: 100%; }
-    .grid-4x2 { gap: 4px; }
-    .reserve-grid { gap: 4px; width: 100%; }
-    
-    /* Скрываем заголовки, т.к. вместо них теперь кнопки сворачивания */
-    .sell-title { display: none; }
-    .hide-on-mobile { display: none !important; }
-    
-    /* Активируем кнопки-переключатели */
-    .mobile-toggle-btn { display: flex; }
-    
-    /* Прячем контент по умолчанию */
-    .sell-arena { display: none; }
-    .sell-arena.expanded { display: flex; margin-top: 10px; }
-    
-    .all-players-content { display: none; }
-    .all-players-content.expanded { display: flex; }
-
-    /* ШРИФТЫ внутри карт оставляем без изменений, как ты и просил */
-    .card-rating { font-size: 26px; top: 6px; left: 8px; }
-    .card-name { font-size: 11px; padding: 20px 0 4px; }
-    
-    .header { padding: 15px 20px; }
-    .upgrade-arena { flex-direction: column; gap: 20px; }
-    .stat-box { transform: translateY(0); flex-direction: row; align-items: center; justify-content: space-between; width: 100%; max-width: 260px; }
-    .stat-val-white, .stat-val-cost { font-size: 28px; }
-    
-    .target-frame { width: 165px; height: 220px; }
-    .target-frame .card-rating { font-size: 26px; }
+@media(max-width:800px){
+.main-content{flex-direction:column;align-items:stretch;padding:15px 4px;gap:15px}
+.bottom-sections{padding:10px 4px 30px}
+.team-sidebar{width:100%;order:-1}
+.team-rating-box{width:100%;flex-direction:row;justify-content:space-between;padding:15px 20px}
+.pitch{padding:6px 4px;border-radius:12px;width:100%}
+.grid-4x2{gap:4px}
+.reserve-grid{gap:4px;width:100%}
+.sell-title{display:none}
+.hide-on-mobile{display:none!important}
+.mobile-toggle-btn{display:flex}
+.sell-arena{display:none}
+.sell-arena.expanded{display:flex;margin-top:10px}
+.all-players-content{display:none}
+.all-players-content.expanded{display:flex}
+.card-rating{font-size:26px;top:6px;left:8px}
+.card-name{font-size:11px;padding:20px 0 4px}
+.header{padding:15px 20px}
+.upgrade-arena{flex-direction:column;gap:20px}
+.stat-box{transform:translateY(0);flex-direction:row;align-items:center;justify-content:space-between;width:100%;max-width:260px}
+.stat-val-white,.stat-val-cost{font-size:28px}
+.target-frame{width:165px;height:220px}
+.target-frame .card-rating{font-size:26px}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
+<script>
+const SUPA_URL = 'https://fkswvuicrgofujwxsghb.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrc3d2dWljcmdvZnVqd3hzZ2hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NjI1ODcsImV4cCI6MjA5NDMzODU4N30.NSg4-ni1LgnNQ-CuJ48wZVfpgBPmSmKO11lOkJQgeLs';
+const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+const CLUBS = ['https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg', 'https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg', 'https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg'];
+function getSession(){ return JSON.parse(localStorage.getItem('foots_session')||'null'); }
+function setSession(s){ localStorage.setItem('foots_session', JSON.stringify(s)); }
+function requireSession(){
+  if(!getSession()){ window.location.href='register.html'; }
+}
+</script>
+
+<script>
+requireSession();
+const _sess = getSession();
+</script>
 
 <div class="dark-bg"></div>
+<div class="toast" id="toast"></div>
 
-<!-- ИНСТРУКЦИЯ (ОБУЧЕНИЕ) -->
+<!-- ИНСТРУКЦИЯ -->
 <div class="tutorial-overlay" id="tutorial-modal">
     <div class="tutorial-modal">
         <div class="tutorial-title">Добро пожаловать</div>
@@ -246,9 +189,7 @@ html, body {
             <div class="tutorial-item"><div class="tut-circle tut-violet"></div>Самая лучшая карта</div>
         </div>
         <div class="tutorial-divider"></div>
-        <div class="tutorial-desc">
-            В меню состава вы можете управлять своей командой, улучшать игроков или продавать их. Общий рейтинг команды зависит от рейтинга карточек, выставленных на поле — чем он выше, тем сильнее команда. Хорошей игры!
-        </div>
+        <div class="tutorial-desc">В меню состава вы можете управлять своей командой, улучшать игроков или продавать их. Общий рейтинг команды зависит от рейтинга карточек, выставленных на поле — чем он выше, тем сильнее команда. Хорошей игры!</div>
         <button class="tutorial-btn" onclick="closeTutorial()">Понятно</button>
     </div>
 </div>
@@ -257,7 +198,7 @@ html, body {
 <header class="header">
     <div class="header-left">
         <button class="back-btn"><i class="fa-solid fa-chevron-left"></i></button>
-        <div class="header-title">СОСТАВ</div>
+        <img src="https://i.ibb.co/PGtMZLcX/logo.png" alt="FOOTS FC" class="header-logo">
     </div>
     <div class="coins-display">
         <span id="coins-balance">10K</span>
@@ -267,51 +208,35 @@ html, body {
 
 <!-- ОСНОВНОЙ КОНТЕНТ -->
 <div class="main-content">
-    
-    <!-- ПОЛЕ -->
     <div class="pitch">
-        <div class="grid-4x2" id="pitch-grid">
-            <!-- Сюда добавляются игроки основы -->
-        </div>
+        <div class="grid-4x2" id="pitch-grid"></div>
     </div>
-
-    <!-- САЙДБАР (Справа на ПК, Сверху на Телефоне) -->
     <div class="team-sidebar">
-        <!-- Блок рейтинга с SVG щитом -->
         <div class="team-rating-box">
             <span class="rating-label">Общий рейтинг</span>
             <div class="shield-container">
                 <svg viewBox="0 0 100 120" class="shield-svg">
-                    <path d="M50 5 L95 20 L90 80 L50 115 L10 80 L5 20 Z" fill="#ffffff" stroke="#dddddd" stroke-width="2"/>
+                    <path d="M50 5 L95 20 L90 80 L50 115 L10 80 L5 20 Z" fill="#ffffff" stroke="#ddd" stroke-width="2"/>
                 </svg>
                 <span class="rating-value" id="team-rating">0</span>
             </div>
         </div>
-        
         <button class="upgrade-menu-btn" onclick="openUpgradeModal()">Усиление игрока</button>
-
-        <!-- ЗОНА ПРОДАЖИ (Со сворачиванием на телефоне) -->
         <div class="sell-zone-container">
-            <button class="mobile-toggle-btn" onclick="toggleMobileSection('sell-arena-content', 'sell-icon')">
-                <span>Продажа игрока</span> <i class="fa-solid fa-chevron-down" id="sell-icon"></i>
+            <button class="mobile-toggle-btn" onclick="toggleMobileSection('sell-arena-content','sell-icon')">
+                <span>Продажа игрока</span><i class="fa-solid fa-chevron-down" id="sell-icon"></i>
             </button>
-            
             <div class="sell-title hide-on-mobile">Продай карту и узнай сколько получишь</div>
             <div class="sell-arena" id="sell-arena-content">
-                <div class="card-slot sell-drop-zone" id="sell-drop-zone">
-                    <!-- Сюда кидать карту -->
-                </div>
+                <div class="card-slot sell-drop-zone" id="sell-drop-zone"></div>
                 <div class="sell-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
                 <div class="sell-info">
-                    <div class="sell-price-display">
-                        <span id="sell-price">0</span>
-                        <i class="fa-solid fa-coins"></i>
-                    </div>
+                    <div class="sell-price-display"><span id="sell-price">0</span><i class="fa-solid fa-coins"></i></div>
                     <button class="action-sell-btn" id="confirm-sell-btn" onclick="confirmSell()">ПРОДАТЬ</button>
+                    <button class="action-sell-btn" id="cancel-sell-btn" onclick="cancelSell()" style="background:rgba(255,255,255,0.1);margin-top:4px;opacity:0;pointer-events:none">ВЕРНУТЬ</button>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -321,12 +246,10 @@ html, body {
         <div class="section-header">Запас (Макс. 4)</div>
         <div class="reserve-grid" id="reserve-grid"></div>
     </div>
-    
-    <!-- ВСЕ ИГРОКИ (Со сворачиванием на телефоне) -->
     <div>
         <div class="section-header hide-on-mobile">Все игроки</div>
-        <button class="mobile-toggle-btn" onclick="toggleMobileSection('all-players-content', 'players-icon')">
-            <span>Все игроки</span> <i class="fa-solid fa-chevron-down" id="players-icon"></i>
+        <button class="mobile-toggle-btn" onclick="toggleMobileSection('all-players-content','players-icon')">
+            <span>Все игроки</span><i class="fa-solid fa-chevron-down" id="players-icon"></i>
         </button>
         <div class="empty-panel all-players-content" id="all-players-content">Здесь пока ничего нет</div>
     </div>
@@ -338,22 +261,15 @@ html, body {
         <div class="modal-title">Усиление игрока</div>
         <button class="close-btn" onclick="closeUpgradeModal()"><i class="fa-solid fa-xmark"></i></button>
     </div>
-
     <div class="upgrade-arena">
         <div class="stat-box" id="stat-boost">
             <span class="stat-label">Рейтинг</span>
-            <!-- Белый +4 -->
             <span class="stat-val-white" id="stat-boost-val">+4</span>
         </div>
-
         <div class="target-frame-wrap">
-            <div class="target-frame" id="target-frame">
-                <!-- Карточка появится здесь -->
-            </div>
-            <!-- Белая кнопка -->
+            <div class="target-frame" id="target-frame"></div>
             <button class="action-upgrade-btn" id="action-upgrade-btn" onclick="performUpgrade()">Усилить</button>
         </div>
-
         <div class="stat-box" id="stat-cost">
             <span class="stat-label">Стоимость</span>
             <div class="stat-val-cost" id="stat-cost-wrap">
@@ -362,436 +278,387 @@ html, body {
             </div>
         </div>
     </div>
-
     <div class="player-carousel-wrap">
         <div class="carousel-title">Выберите игрока для усиления:</div>
-        <div class="player-carousel" id="player-carousel">
-            <!-- Клоны карточек для выбора -->
-        </div>
+        <div class="player-carousel" id="player-carousel"></div>
     </div>
 </div>
 
 <script>
-// V6 ключи для запуска функционала 
-let currentCoins = localStorage.getItem('foots_coins_v6') ? parseInt(localStorage.getItem('foots_coins_v6')) : 10000;
-
-// Базовый список имен
-const allNames = ["Smith", "Jones", "Williams", "Brown", "Taylor", "Davies", "Evans", "Thomas", "Roberts", "Walker", "White", "Harris", "Martin", "Clark"];
+let currentCoins = _sess ? (_sess.coins||10000) : 10000;
+const allNames = ["Smith","Jones","Williams","Brown","Taylor","Davies","Evans","Thomas","Roberts","Walker","White","Harris","Martin","Clark"];
 let availableNames = [...allNames];
 
-// Функция для получения УНИКАЛЬНОГО имени
 function getUniqueName() {
-    // Если имена закончились, обновляем список
-    if (availableNames.length === 0) {
-        availableNames = [...allNames];
-    }
-    // Выбираем случайное имя из оставшихся
-    const randomIndex = Math.floor(Math.random() * availableNames.length);
-    // Удаляем его из массива доступных и возвращаем
-    return availableNames.splice(randomIndex, 1)[0];
+    if (!availableNames.length) availableNames = [...allNames];
+    return availableNames.splice(Math.floor(Math.random() * availableNames.length), 1)[0];
 }
 
-const maxUpgrades = {
-    'card-standard': 5,
-    'card-blue': 4,
-    'card-red': 3,
-    'card-violet': 1
-};
+const maxUpgrades = {'card-standard':5,'card-blue':4,'card-red':3,'card-violet':1};
+const sellMultipliers = {'card-standard':10,'card-blue':20,'card-red':35,'card-violet':60};
+const typeRanges = {'card-standard':[55,69],'card-blue':[70,79],'card-red':[80,89],'card-violet':[90,99]};
 
-// Функция для сворачивания/разворачивания секций на мобильном
+let selectedOriginalCardId = null;
+// { card, originSlot } — карта в зоне продажи и откуда она пришла
+let sellState = null;
+
+// === TOAST ===
+let toastTimer = null;
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
 function toggleMobileSection(contentId, iconId) {
     const content = document.getElementById(contentId);
     const icon = document.getElementById(iconId);
-    
-    if (content.classList.contains('expanded')) {
-        content.classList.remove('expanded');
-        icon.classList.remove('fa-chevron-up');
-        icon.classList.add('fa-chevron-down');
-    } else {
-        content.classList.add('expanded');
-        icon.classList.remove('fa-chevron-down');
-        icon.classList.add('fa-chevron-up');
-    }
+    const expanded = content.classList.toggle('expanded');
+    icon.className = `fa-solid fa-chevron-${expanded ? 'up' : 'down'}`;
 }
 
-
-// Форматирование монет
 function formatCoins(num) {
-    if (num >= 1000) {
-        let val = num / 1000;
-        return (val % 1 === 0 ? val : val.toFixed(1)) + 'K';
-    }
+    if (num >= 1000) { const v = num/1000; return (v%1===0?v:v.toFixed(1))+'K'; }
     return num.toString();
 }
 
 function updateCoinsUI() {
     document.getElementById('coins-balance').innerText = formatCoins(currentCoins);
-    localStorage.setItem('foots_coins_v6', currentCoins.toString());
+    localStorage.setItem('foots_coins_v7', currentCoins.toString());
+    // Sync to Supabase
+    clearTimeout(window._coinSaveTimer);
+    window._coinSaveTimer = setTimeout(async()=>{
+      await db.from('profiles').update({coins:currentCoins}).eq('id',_sess.id);
+    }, 1000);
 }
 
-function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function getRandomInt(min, max) { return Math.floor(Math.random()*(max-min+1))+min; }
 
-function createCardElement(type, rating, name, upgrades = 0) {
+function isPitchSlot(slot) {
+    return document.getElementById('pitch-grid').contains(slot);
+}
+
+function getPitchCardCount() {
+    return document.querySelectorAll('#pitch-grid .card').length;
+}
+
+function createCardElement(type, rating, name, upgrades=0) {
     const slot = document.createElement('div');
     slot.className = 'card-slot';
-
-    if(type) {
+    if (type) {
         const card = document.createElement('div');
         card.className = `card ${type}`;
         card.draggable = true;
         card.dataset.rating = rating;
+        card.dataset.name = name;
         card.dataset.type = type;
         card.dataset.upgrades = upgrades;
-        card.id = 'card-' + Math.random().toString(36).substr(2, 9); 
-
-        card.innerHTML = `
-            <div class="card-rating">${rating}</div>
-            <div class="card-name">${name}</div>
-        `;
+        card.id = 'card-' + Math.random().toString(36).substr(2,9);
+        card.innerHTML = `<div class="card-rating">${rating}</div><div class="card-name">${name}</div>`;
+        setupDrag(card);
         slot.appendChild(card);
     }
+    setupDropZone(slot);
     return slot;
 }
 
-// === ОБУЧЕНИЕ ===
-function checkTutorial() {
-    if (!localStorage.getItem('foots_tutorial_seen_v6')) {
-        document.getElementById('tutorial-modal').classList.add('active');
-    }
-}
-
-function closeTutorial() {
-    document.getElementById('tutorial-modal').classList.remove('active');
-    localStorage.setItem('foots_tutorial_seen_v6', 'true');
-}
-
-function initGame() {
-    checkTutorial();
-    updateCoinsUI();
-    
-    const pitchGrid = document.getElementById("pitch-grid");
-    const reserveGrid = document.getElementById("reserve-grid");
-    const sellZone = document.getElementById("sell-drop-zone");
-
-    if(localStorage.getItem('foots_pitch_v6') && localStorage.getItem('foots_reserve_v6')) {
-        pitchGrid.innerHTML = localStorage.getItem('foots_pitch_v6');
-        reserveGrid.innerHTML = localStorage.getItem('foots_reserve_v6');
-        if(localStorage.getItem('foots_sell_v6')) {
-            sellZone.innerHTML = localStorage.getItem('foots_sell_v6');
-            const cardInSell = sellZone.querySelector('.card');
-            if(cardInSell) calculateSellPrice(cardInSell);
-        }
-    } else {
-        // Создание СТАРТОВОГО состава с уникальными именами
-        pitchGrid.appendChild(createCardElement('card-blue', getRandomInt(41, 69), getUniqueName())); 
-        for(let i = 0; i < 7; i++) {
-            pitchGrid.appendChild(createCardElement('card-standard', getRandomInt(10, 40), getUniqueName())); 
-        }
-        reserveGrid.appendChild(createCardElement('card-standard', getRandomInt(10, 40), getUniqueName())); 
-        for(let i = 0; i < 3; i++) { reserveGrid.appendChild(createCardElement(null, null, null)); }
-        
-        saveGameState();
-    }
-    
-    updateTeamRating();
-}
-
 function saveGameState() {
-    localStorage.setItem('foots_pitch_v6', document.getElementById("pitch-grid").innerHTML);
-    localStorage.setItem('foots_reserve_v6', document.getElementById("reserve-grid").innerHTML);
-    localStorage.setItem('foots_sell_v6', document.getElementById("sell-drop-zone").innerHTML);
-}
-
-// === ПОДСЧЕТ РЕЙТИНГА ===
-function updateTeamRating() {
-    const cardsOnPitch = document.querySelectorAll('#pitch-grid .card');
-    let total = 0; let count = 0;
-    cardsOnPitch.forEach(card => {
-        total += parseInt(card.dataset.rating);
-        count++;
+    const state = {pitch:[],reserve:[]};
+    document.querySelectorAll('#pitch-grid .card-slot').forEach(slot => {
+        const c = slot.querySelector('.card');
+        state.pitch.push(c?{type:c.dataset.type,rating:parseInt(c.dataset.rating),name:c.dataset.name,upgrades:parseInt(c.dataset.upgrades)||0}:null);
     });
-    const avg = count > 0 ? Math.round(total / count) : 0;
-    document.getElementById("team-rating").innerText = avg;
+    document.querySelectorAll('#reserve-grid .card-slot').forEach(slot => {
+        const c = slot.querySelector('.card');
+        state.reserve.push(c?{type:c.dataset.type,rating:parseInt(c.dataset.rating),name:c.dataset.name,upgrades:parseInt(c.dataset.upgrades)||0}:null);
+    });
+    localStorage.setItem('foots_state_v7', JSON.stringify(state));
 }
 
-// === DRAG & DROP ===
-let draggedCard = null;
-let sourceSlot = null;
+function updateTeamRating() {
+    let total=0,count=0;
+    document.querySelectorAll('#pitch-grid .card').forEach(c=>{total+=parseInt(c.dataset.rating);count++;});
+    document.getElementById('team-rating').innerText = count?Math.round(total/count):0;
+}
 
-document.addEventListener('dragstart', (e) => {
-    if(e.target.classList && e.target.classList.contains('card')) {
-        draggedCard = e.target;
-        sourceSlot = draggedCard.closest('.card-slot');
-        e.dataTransfer.effectAllowed = 'move';
-        setTimeout(() => { e.target.classList.add('dragging'); }, 0);
-    }
-});
+function setupDrag(card) {
+    card.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', card.id);
+        setTimeout(()=>card.classList.add('dragging'),0);
+    });
+    card.addEventListener('dragend', ()=>card.classList.remove('dragging'));
+}
 
-document.addEventListener('dragend', (e) => {
-    if(e.target.classList && e.target.classList.contains('card')) {
-        e.target.classList.remove('dragging');
-        document.getElementById('sell-drop-zone').classList.remove('drag-over');
-        draggedCard = null;
-        sourceSlot = null;
-    }
-});
+function setupDropZone(slot) {
+    slot.addEventListener('dragover', e=>e.preventDefault());
+    slot.addEventListener('drop', e=>{
+        e.preventDefault();
+        const draggedId = e.dataTransfer.getData('text/plain');
+        const dragged = document.getElementById(draggedId);
+        if (!dragged || dragged===slot.querySelector('.card')) return;
 
-document.addEventListener('dragover', (e) => { 
-    e.preventDefault(); 
-    if(e.target.closest('#sell-drop-zone')) {
-        document.getElementById('sell-drop-zone').classList.add('drag-over');
-    } else {
-        document.getElementById('sell-drop-zone').classList.remove('drag-over');
-    }
-});
+        const originSlot = dragged.parentElement;
+        const targetCard = slot.querySelector('.card');
 
-document.addEventListener('drop', (e) => {
-    e.preventDefault();
-    const targetSlot = e.target.closest('.card-slot');
-    const sellZone = document.getElementById('sell-drop-zone');
-    sellZone.classList.remove('drag-over');
+        // Запрещаем перетаскивать из основы (8 игроков) в запас если это уведёт карту с поля
+        // и там не будет замены
+        const fromPitch = isPitchSlot(originSlot);
+        const toPitch = isPitchSlot(slot);
 
-    if(targetSlot && draggedCard && sourceSlot !== targetSlot) {
-        if(targetSlot.closest('.upgrade-arena')) return; 
-
-        const targetCard = targetSlot.querySelector('.card');
-        
-        // Если кидают в зону продажи
-        if(targetSlot.id === 'sell-drop-zone') {
-            if(targetCard) sourceSlot.appendChild(targetCard);
-            targetSlot.appendChild(draggedCard);
-            calculateSellPrice(draggedCard);
-        } 
-        // Обычное перемещение
-        else {
-            if (targetCard) sourceSlot.appendChild(targetCard);
-            targetSlot.appendChild(draggedCard);
-            
-            // Если вытащили из зоны продажи
-            if(sourceSlot.id === 'sell-drop-zone') {
-                resetSellZone();
-            }
-            else if(targetCard && sourceSlot.id === 'sell-drop-zone') {
-                 calculateSellPrice(targetCard);
+        if (fromPitch && !toPitch && !targetCard) {
+            // Пытаются убрать карту из основы в пустой резервный слот
+            if (getPitchCardCount() <= 8) {
+                showToast('⚠️ Минимум 8 игроков в основе!');
+                return;
             }
         }
-        
+
+        if (targetCard) originSlot.appendChild(targetCard);
+        slot.appendChild(dragged);
+        dragged.classList.remove('dragging');
         updateTeamRating();
         saveGameState();
-    }
-});
-
-// === ЛОГИКА ПРОДАЖИ ===
-
-let slotMachineInterval = null;
-
-function calculateSellPrice(card) {
-    const rating = parseInt(card.dataset.rating);
-    const targetPrice = rating * 35;
-    
-    const priceDisplay = document.getElementById('sell-price');
-    const btn = document.getElementById('confirm-sell-btn');
-    
-    clearInterval(slotMachineInterval);
-    let duration = 600;
-    let startTime = Date.now();
-    
-    slotMachineInterval = setInterval(() => {
-        let now = Date.now();
-        if(now - startTime >= duration) {
-            clearInterval(slotMachineInterval);
-            priceDisplay.innerText = targetPrice;
-            btn.classList.add('active');
-        } else {
-            priceDisplay.innerText = Math.floor(Math.random() * (targetPrice + 200));
-        }
-    }, 40);
+    });
 }
 
-function resetSellZone() {
-    clearInterval(slotMachineInterval);
-    document.getElementById('sell-price').innerText = "0";
-    document.getElementById('confirm-sell-btn').classList.remove('active');
+function clearSellZoneUI() {
+    document.getElementById('sell-price').innerText = '0';
+    const confirmBtn = document.getElementById('confirm-sell-btn');
+    const cancelBtn = document.getElementById('cancel-sell-btn');
+    confirmBtn.classList.remove('active');
+    cancelBtn.style.opacity = '0';
+    cancelBtn.style.pointerEvents = 'none';
+}
+
+function setupSellZone() {
+    const zone = document.getElementById('sell-drop-zone');
+    zone.addEventListener('dragover', e=>{e.preventDefault();zone.classList.add('drag-over');});
+    zone.addEventListener('dragleave', ()=>zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e=>{
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        const draggedId = e.dataTransfer.getData('text/plain');
+        const dragged = document.getElementById(draggedId);
+        if (!dragged) return;
+
+        const originSlot = dragged.parentElement;
+
+        // Нельзя продать из основы если игроков ровно 8
+        if (isPitchSlot(originSlot) && getPitchCardCount() <= 8) {
+            showToast('⚠️ Минимум 8 игроков в основе! Переведи в запас сначала.');
+            return;
+        }
+
+        // Если в зоне уже есть карта — вернуть её обратно
+        if (sellState) {
+            returnCardFromSellZone();
+        }
+
+        // Запомнить откуда пришла карта и убрать её из оригинального слота
+        sellState = { card: dragged, originSlot: originSlot };
+        zone.appendChild(dragged);
+
+        const mult = sellMultipliers[dragged.dataset.type]||10;
+        const price = parseInt(dragged.dataset.rating)*mult;
+        document.getElementById('sell-price').innerText = formatCoins(price);
+
+        const confirmBtn = document.getElementById('confirm-sell-btn');
+        const cancelBtn = document.getElementById('cancel-sell-btn');
+        confirmBtn.classList.add('active');
+        cancelBtn.style.opacity = '1';
+        cancelBtn.style.pointerEvents = 'auto';
+    });
+}
+
+function returnCardFromSellZone() {
+    if (!sellState) return;
+    const {card, originSlot} = sellState;
+    // Вернуть карту в исходный слот
+    if (originSlot && document.body.contains(originSlot)) {
+        originSlot.appendChild(card);
+    } else {
+        // Если слот уже не существует (был временный) — в резерв
+        const freeSlot = [...document.querySelectorAll('#reserve-grid .card-slot')].find(s=>!s.querySelector('.card'));
+        if (freeSlot) freeSlot.appendChild(card);
+    }
+    sellState = null;
+    clearSellZoneUI();
+    updateTeamRating();
+    saveGameState();
+}
+
+function cancelSell() {
+    returnCardFromSellZone();
 }
 
 function confirmSell() {
-    const sellZone = document.getElementById('sell-drop-zone');
-    const cardToSell = sellZone.querySelector('.card');
-    if(!cardToSell) return;
-
-    const totalCards = document.querySelectorAll('#pitch-grid .card, #reserve-grid .card, #sell-drop-zone .card').length;
-    
-    if(totalCards <= 8) {
-        alert("В клубе должно оставаться минимум 8 игроков!");
-        return;
-    }
-
-    const price = parseInt(document.getElementById('sell-price').innerText);
-    
-    currentCoins += price;
-    updateCoinsUI();
-    
-    document.getElementById('confirm-sell-btn').classList.remove('active');
-    cardToSell.classList.add('vanishing');
-    
-    setTimeout(() => {
-        cardToSell.remove();
-        resetSellZone();
+    if (!sellState) return;
+    const {card} = sellState;
+    const mult = sellMultipliers[card.dataset.type]||10;
+    const price = parseInt(card.dataset.rating)*mult;
+    card.classList.add('vanishing');
+    setTimeout(()=>{
+        card.remove();
+        sellState = null;
+        currentCoins += price;
+        updateCoinsUI();
+        clearSellZoneUI();
+        updateTeamRating();
         saveGameState();
-    }, 500);
+        populateCarousel();
+    },500);
 }
-
-// === ЛОГИКА УСИЛЕНИЯ (МОДАЛЬНОЕ ОКНО) ===
-let selectedOriginalCardId = null;
 
 function openUpgradeModal() {
     document.getElementById('upgrade-modal').classList.add('active');
     populateCarousel();
-    clearTargetFrame();
 }
 
 function closeUpgradeModal() {
     document.getElementById('upgrade-modal').classList.remove('active');
     selectedOriginalCardId = null;
-}
-
-function populateCarousel() {
-    const carousel = document.getElementById('player-carousel');
-    carousel.innerHTML = '';
-    
-    const allCards = document.querySelectorAll('#pitch-grid .card, #reserve-grid .card');
-    
-    allCards.forEach(origCard => {
-        const clone = origCard.cloneNode(true);
-        clone.draggable = false;
-        clone.classList.remove('dragging');
-        clone.onclick = () => selectPlayerForUpgrade(origCard.id, clone);
-        carousel.appendChild(clone);
-    });
-}
-
-function clearTargetFrame() {
     document.getElementById('target-frame').innerHTML = '';
     document.getElementById('stat-boost').classList.remove('visible');
     document.getElementById('stat-cost').classList.remove('visible');
     document.getElementById('action-upgrade-btn').classList.remove('visible');
 }
 
-function selectPlayerForUpgrade(originalId, cardElement) {
+function populateCarousel() {
+    const carousel = document.getElementById('player-carousel');
+    carousel.innerHTML = '';
+    document.querySelectorAll('#pitch-grid .card, #reserve-grid .card').forEach(c=>{
+        const clone = c.cloneNode(true);
+        clone.style.pointerEvents = 'auto';
+        clone.removeAttribute('draggable');
+        clone.id = 'carousel-'+c.id;
+        clone.addEventListener('click',()=>selectPlayerForUpgrade(c.id,clone));
+        carousel.appendChild(clone);
+    });
+}
+
+function selectPlayerForUpgrade(originalId, clickedClone) {
     selectedOriginalCardId = originalId;
-    const targetFrame = document.getElementById('target-frame');
-    
-    targetFrame.innerHTML = '';
-    const displayCard = cardElement.cloneNode(true);
-    targetFrame.appendChild(displayCard);
-
-    const origCard = document.getElementById(originalId);
-    const type = origCard.dataset.type;
-    const currentRating = parseInt(origCard.dataset.rating);
-    const currentUpgrades = parseInt(origCard.dataset.upgrades) || 0;
-    const limit = maxUpgrades[type];
-
+    document.querySelectorAll('#player-carousel .card').forEach(c=>c.style.border='');
+    clickedClone.style.border = '2px solid #fff';
+    const orig = document.getElementById(originalId);
+    const frame = document.getElementById('target-frame');
+    frame.innerHTML = '';
+    const cardCopy = orig.cloneNode(true);
+    cardCopy.id = '';
+    cardCopy.style.cssText = 'pointer-events:none;width:100%;height:100%';
+    frame.appendChild(cardCopy);
     document.getElementById('stat-boost').classList.add('visible');
     document.getElementById('stat-cost').classList.add('visible');
+    document.getElementById('action-upgrade-btn').classList.add('visible');
+    updateUpgradeUI(orig);
+}
+
+function updateUpgradeUI(origCard) {
+    const currentRating = parseInt(origCard.dataset.rating);
+    const currentUpgrades = parseInt(origCard.dataset.upgrades)||0;
+    const limit = maxUpgrades[origCard.dataset.type]||5;
     const btn = document.getElementById('action-upgrade-btn');
-    btn.classList.add('visible');
-
-    const costText = document.getElementById('upgrade-cost-text');
     const costWrap = document.getElementById('stat-cost-wrap');
-
-    if(currentUpgrades >= limit) {
-        costText.innerText = "MAX";
-        costText.style.fontFamily = "'Montserrat', sans-serif";
-        costWrap.classList.add('disabled'); 
-        
-        btn.disabled = true;
-        btn.innerText = "МАКСИМУМ";
+    const costText = document.getElementById('upgrade-cost-text');
+    if (currentUpgrades>=limit) {
+        costText.innerText="MAX"; costText.style.fontFamily="'Montserrat',sans-serif";
+        costWrap.classList.add('disabled'); btn.disabled=true; btn.innerText="МАКСИМУМ";
     } else {
-        const cost = currentRating * 50;
-        costText.innerText = cost;
-        costText.style.fontFamily = "'Orbitron', sans-serif";
-        
-        if(currentCoins >= cost) {
-            costWrap.classList.remove('disabled');
-            btn.disabled = false;
-        } else {
-            costWrap.classList.add('disabled');
-            btn.disabled = true;
-        }
-        btn.innerText = "УСИЛИТЬ";
+        const cost = currentRating*50;
+        costText.innerText=cost; costText.style.fontFamily="'Orbitron',sans-serif";
+        costWrap.classList.toggle('disabled',currentCoins<cost);
+        btn.disabled=currentCoins<cost; btn.innerText="УСИЛИТЬ";
     }
 }
 
 function animatePlus4Fly() {
-    const boostVal = document.getElementById('stat-boost-val');
-    const targetRating = document.querySelector('#target-frame .card-rating');
-    
-    const rect1 = boostVal.getBoundingClientRect();
-    const rect2 = targetRating.getBoundingClientRect();
-
-    const flyingElement = document.createElement('div');
-    flyingElement.innerText = '+4';
-    flyingElement.style.position = 'fixed';
-    flyingElement.style.left = rect1.left + 'px';
-    flyingElement.style.top = rect1.top + 'px';
-    flyingElement.style.color = '#fff';
-    flyingElement.style.fontFamily = "'Orbitron', sans-serif";
-    flyingElement.style.fontSize = window.innerWidth <= 800 ? '28px' : '40px';
-    flyingElement.style.fontWeight = '800';
-    flyingElement.style.zIndex = '9999';
-    flyingElement.style.transition = 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
-    flyingElement.style.textShadow = '0 0 15px rgba(255,255,255,0.8)';
-    
-    document.body.appendChild(flyingElement);
-
-    flyingElement.getBoundingClientRect();
-
-    flyingElement.style.left = rect2.left + 'px';
-    flyingElement.style.top = rect2.top + 'px';
-    flyingElement.style.transform = 'scale(0.5)';
-    flyingElement.style.opacity = '0';
-
-    setTimeout(() => { flyingElement.remove(); }, 500);
+    const r1=document.getElementById('stat-boost-val').getBoundingClientRect();
+    const r2=document.querySelector('#target-frame .card-rating').getBoundingClientRect();
+    const el=document.createElement('div');
+    el.innerText='+4';
+    Object.assign(el.style,{position:'fixed',left:r1.left+'px',top:r1.top+'px',color:'#fff',
+        fontFamily:"'Orbitron',sans-serif",fontSize:window.innerWidth<=800?'28px':'40px',
+        fontWeight:'800',zIndex:'9999',transition:'all .5s cubic-bezier(.25,1,.5,1)',
+        textShadow:'0 0 15px rgba(255,255,255,0.8)'});
+    document.body.appendChild(el);
+    el.getBoundingClientRect();
+    Object.assign(el.style,{left:r2.left+'px',top:r2.top+'px',transform:'scale(.5)',opacity:'0'});
+    setTimeout(()=>el.remove(),500);
 }
 
 function performUpgrade() {
-    if(!selectedOriginalCardId) return;
+    if (!selectedOriginalCardId) return;
+    const orig = document.getElementById(selectedOriginalCardId);
+    const currentRating = parseInt(orig.dataset.rating);
+    const currentUpgrades = parseInt(orig.dataset.upgrades)||0;
+    const cost = currentRating*50;
+    if (currentCoins<cost) return;
+    currentCoins-=cost; updateCoinsUI();
+    document.getElementById('action-upgrade-btn').disabled=true;
+    const newRating=currentRating+4;
+    orig.dataset.rating=newRating; orig.dataset.upgrades=currentUpgrades+1;
+    animatePlus4Fly();
+    const displayRating=document.querySelector('#target-frame .card-rating');
+    setTimeout(()=>{
+        displayRating.classList.add('rating-animating');
+        displayRating.innerText=newRating;
+        orig.querySelector('.card-rating').innerText=newRating;
+        updateTeamRating(); saveGameState();
+    },400);
+    setTimeout(()=>{
+        displayRating.classList.remove('rating-animating');
+        selectPlayerForUpgrade(selectedOriginalCardId,document.querySelector('#player-carousel .card[style*="border"]')||document.querySelector('#player-carousel .card'));
+        populateCarousel();
+    },900);
+}
 
-    const origCard = document.getElementById(selectedOriginalCardId);
-    let currentRating = parseInt(origCard.dataset.rating);
-    let currentUpgrades = parseInt(origCard.dataset.upgrades) || 0;
-    
-    const cost = currentRating * 50;
+function closeTutorial() {
+    document.getElementById('tutorial-modal').classList.remove('active');
+    localStorage.setItem('foots_tutorial_v7','1');
+}
 
-    if(currentCoins >= cost) {
-        currentCoins -= cost;
-        updateCoinsUI();
+function generateInitialPlayers() {
+    // Только коричневые и синие для новичков
+    const starterTypes = ['card-standard','card-blue'];
+    const players = [];
+    // 4 коричневых + 4 синих
+    for (let i=0;i<4;i++) {
+        const [min,max]=typeRanges['card-standard'];
+        players.push({type:'card-standard',rating:getRandomInt(min,max),name:getUniqueName()});
+    }
+    for (let i=0;i<4;i++) {
+        const [min,max]=typeRanges['card-blue'];
+        players.push({type:'card-blue',rating:getRandomInt(min,max),name:getUniqueName()});
+    }
+    return players.sort(()=>Math.random()-0.5);
+}
 
-        const btn = document.getElementById('action-upgrade-btn');
-        btn.disabled = true;
+function initGame() {
+    // Сбросить сохранение если структура устарела (старые данные с красными/фиолетовыми новичками)
+    const pitchGrid = document.getElementById('pitch-grid');
+    const reserveGrid = document.getElementById('reserve-grid');
+    const saved = localStorage.getItem('foots_state_v7');
 
-        const newRating = currentRating + 4;
-        origCard.dataset.rating = newRating;
-        origCard.dataset.upgrades = currentUpgrades + 1;
+    pitchGrid.innerHTML=''; reserveGrid.innerHTML='';
 
-        animatePlus4Fly();
-        
-        const displayCardRating = document.querySelector('#target-frame .card-rating');
-        
-        setTimeout(() => {
-            displayCardRating.classList.add('rating-animating');
-            displayCardRating.innerText = newRating;
-            origCard.querySelector('.card-rating').innerText = newRating;
-            
-            updateTeamRating();
-            saveGameState();
-        }, 400); 
+    if (saved) {
+        const state = JSON.parse(saved);
+        // Восстановить ровно 8 слотов в основе
+        const pitchData = state.pitch.slice(0,8);
+        while(pitchData.length<8) pitchData.push(null);
+        pitchData.forEach(p=>pitchGrid.appendChild(p?createCardElement(p.type,p.rating,p.name,p.upgrades):createCardElement(null)));
+        state.reserve.forEach(p=>reserveGrid.appendChild(p?createCardElement(p.type,p.rating,p.name,p.upgrades):createCardElement(null)));
+    } else {
+        const players = generateInitialPlayers();
+        players.slice(0,8).forEach(p=>pitchGrid.appendChild(createCardElement(p.type,p.rating,p.name)));
+        for(let i=0;i<4;i++) reserveGrid.appendChild(createCardElement(null));
+    }
 
-        setTimeout(() => {
-            displayCardRating.classList.remove('rating-animating');
-            selectPlayerForUpgrade(selectedOriginalCardId, document.querySelector('#target-frame .card'));
-            populateCarousel(); 
-        }, 900);
+    updateTeamRating(); updateCoinsUI(); setupSellZone();
+    if (!localStorage.getItem('foots_tutorial_v7')) {
+        document.getElementById('tutorial-modal').classList.add('active');
     }
 }
 
