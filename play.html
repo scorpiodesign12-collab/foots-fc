@@ -128,8 +128,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #050505; f
 .fut-card:hover { transform: translateY(-5px); z-index: 50; border-color: #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.8); }
 
 /* Контейнер для 3D SVG манекена */
-.fut-player-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: flex; align-items: flex-end; justify-content: center; }
-.fut-player-img svg { width: 100%; height: auto; transform: translateY(15px); }
+.fut-player-img { display: none; }
 
 /* Рейтинг и Имя */
 .fut-rating { position: absolute; top: 6px; left: 6px; font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 800; color: #fff; z-index: 5; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
@@ -500,7 +499,7 @@ const _sess = getSession();
     }
 
     // === ИГРОВАЯ ЛОГИКА (БЕЗ НАСЛОЕНИЙ С АВАТАРОМ-МАНЕКЕНОМ) ===
-    const CARDS_DB = [
+    const CARDS_DB_DEFAULT = [
         { name: "DAVIS", rating: 65, type: "brown" },
         { name: "ROMERO",rating: 70, type: "brown" },
         { name: "SILVA", rating: 82, type: "blue" },
@@ -508,6 +507,15 @@ const _sess = getSession();
         { name: "KING",  rating: 94, type: "red" },
         { name: "MESSI", rating: 99, type: "red" }
     ];
+    // Load player's actual squad from sostav.html state
+    function getPlayerCards() {
+        try {
+            const state = JSON.parse(localStorage.getItem('foots_state_v7'));
+            if(!state) return CARDS_DB_DEFAULT;
+            const all = [...(state.pitch||[]), ...(state.reserve||[])].filter(c=>c&&c.type&&c.name);
+            return all.length >= 4 ? all : CARDS_DB_DEFAULT;
+        } catch(e) { return CARDS_DB_DEFAULT; }
+    }
 
     let currentMode = 'bot';
     let pScore = 0;
@@ -539,13 +547,16 @@ const _sess = getSession();
         // Генерируем 8 открытых карт Игрока (Дизайн с Аватаром 3D)
         let playerRow = document.getElementById('player-cards');
         playerRow.innerHTML = "";
+        const myCards = getPlayerCards();
+        // shuffle and take up to 8
+        const shuffled = [...myCards].sort(()=>Math.random()-.5);
+        while(shuffled.length < 8) shuffled.push(...myCards);
         for(let i=0; i<8; i++) {
-            let card = CARDS_DB[Math.floor(Math.random() * CARDS_DB.length)];
+            let card = shuffled[i];
             let div = document.createElement('div');
             div.className = `fut-card ${card.type}`;
             div.innerHTML = `
                 <div class="fut-rating">${card.rating}</div>
-                <div class="fut-player-img"><svg viewBox="0 0 100 120"><use href="#dummy-avatar"></use></svg></div>
                 <div class="fut-bottom"><span class="fut-name">${card.name}</span></div>
             `;
             // Событие нажатия (бросок)
@@ -581,7 +592,7 @@ const _sess = getSession();
         if(oppHand.children.length > 0) oppHand.removeChild(oppHand.lastElementChild);
 
         // 3. Выбор случайной карты для Бота
-        let oppData = CARDS_DB[Math.floor(Math.random() * CARDS_DB.length)];
+        let oppData = CARDS_DB_DEFAULT[Math.floor(Math.random() * CARDS_DB_DEFAULT.length)];
         let oRating = oppData.rating;
 
         // 4. Помещаем 3D-анимированную карту в слот противника
@@ -592,7 +603,6 @@ const _sess = getSession();
                     <div class="flip-front card-back" style="width:100%;height:100%;"></div>
                     <div class="flip-back fut-card ${oppData.type}" style="width:100%;height:100%;box-shadow:none;">
                         <div class="fut-rating">${oRating}</div>
-                        <div class="fut-player-img"><svg viewBox="0 0 100 120"><use href="#dummy-avatar"></use></svg></div>
                         <div class="fut-bottom"><span class="fut-name">${oppData.name}</span></div>
                     </div>
                 </div>
