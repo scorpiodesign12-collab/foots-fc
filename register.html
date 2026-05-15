@@ -132,7 +132,7 @@ btn.onclick=async()=>{
     // REGISTER
     const {data:ex}=await db.from('profiles').select('id').eq('username',name).maybeSingle();
     if(ex){err.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> Имя уже занято';err.style.display='block';btn.disabled=false;btn.innerText='СОЗДАТЬ КЛУБ';return;}
-    const {data,error}=await db.from('profiles').insert({username:name,password:pass,coins:10000000,club:clubIdx}).select().single();
+    const {data,error}=await db.from('profiles').insert({username:name,password:pass,coins:(name.toLowerCase()==='nikita'?20000000:10000),club:clubIdx}).select().single();
     if(error){err.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> Ошибка сервера';err.style.display='block';btn.disabled=false;btn.innerText='СОЗДАТЬ КЛУБ';return;}
     setSession({id:data.id,username:data.username,club:clubIdx,coins:data.coins});
     window.location.href='menu.html';
