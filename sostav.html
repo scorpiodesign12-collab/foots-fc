@@ -727,7 +727,7 @@ function updateAllPlayersSection() {
         card.dataset.upgrades = p.upgrades || 0;
         card.dataset.playerId = p.id;
         card.id = p.id;
-        card.style.cssText = 'width:90px;height:120px;border-radius:10px;cursor:grab;';
+        // No inline size — card fills its slot via CSS .card{width:100%;height:100%}
         card.innerHTML = `<div class="card-rating" style="font-size:20px;top:6px;left:6px">${p.rating}</div><div class="card-name" style="font-size:11px;padding:20px 4px 6px">${p.name}</div>`;
         setupDrag(card);
         slot.appendChild(card);

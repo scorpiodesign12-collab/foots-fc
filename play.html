@@ -136,14 +136,17 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #050505; f
 .fut-name { font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
 
 /* Оформление карточек под цвет рубашки */
-.fut-card.brown { border-color: #B8860B; background: linear-gradient(135deg, #7a5a00 0%, #b8860b 45%, #d4af37 50%, #b8860b 55%, #5c4400 100%); }
-.fut-card.brown .fut-player-img svg { color: #d4af37; } /* Золотая футболка */
+.fut-card.brown { border-color: rgba(205,127,50,0.5); background-color: rgba(139,69,19,0.5); background-image: url('https://i.ibb.co/5gv5RPkD/image.webp'); background-size: cover; background-position: center; box-shadow: 0 0 10px rgba(205,127,50,0.5); }
+.fut-card.brown:hover, .fut-card.brown:active { box-shadow: 0 0 25px rgba(205,127,50,0.9); }
 
-.fut-card.blue { border-color: #1e90ff; background: linear-gradient(135deg, #001f3f 0%, #004080 45%, #1e90ff 50%, #004080 55%, #001020 100%); }
-.fut-card.blue .fut-player-img svg { color: #1e90ff; } /* Синяя футболка */
+.fut-card.blue { border-color: rgba(0,150,255,0.5); background-color: rgba(0,100,200,0.6); background-image: url('https://i.ibb.co/0ypNsDHR/image.webp'); background-size: cover; background-position: center; box-shadow: 0 0 10px rgba(0,150,255,0.5); }
+.fut-card.blue:hover, .fut-card.blue:active { box-shadow: 0 0 25px rgba(0,150,255,0.9); }
 
-.fut-card.red { border-color: #ff3333; background: linear-gradient(135deg, #3e0000 0%, #8b0000 45%, #ff3333 50%, #8b0000 55%, #2a0000 100%); }
-.fut-card.red .fut-player-img svg { color: #ff3333; } /* Красная футболка */
+.fut-card.red { border-color: rgba(255,50,50,0.5); background-color: rgba(180,0,0,0.5); background-image: url('https://i.ibb.co/pjN8ns3X/image.webp'); background-size: cover; background-position: center; box-shadow: 0 0 10px rgba(255,50,50,0.5); }
+.fut-card.red:hover, .fut-card.red:active { box-shadow: 0 0 25px rgba(255,50,50,0.9); }
+
+.fut-card.violet { border-color: rgba(160,32,240,0.5); background-color: rgba(90,0,180,0.5); background-image: url('https://i.ibb.co/b0Dv2GN/image.webp'); background-size: cover; background-position: center; box-shadow: 0 0 10px rgba(160,32,240,0.5); }
+.fut-card.violet:hover, .fut-card.violet:active { box-shadow: 0 0 25px rgba(160,32,240,0.9); }
 
 /* Рубашка карт FOOTS CARDS */
 .card-back { background: repeating-linear-gradient(-45deg, #111, #111 8px, #1a1a1a 8px, #1a1a1a 16px); display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -513,7 +516,7 @@ const _sess = getSession();
             // New DB format (foots_players_db)
             const players = JSON.parse(localStorage.getItem('foots_players_db')||'[]');
             if(players.length >= 4) {
-                const typeMap = {'card-standard':'brown','card-blue':'blue','card-red':'red','card-violet':'red'};
+                const typeMap = {'card-standard':'brown','card-blue':'blue','card-red':'red','card-violet':'violet'};
                 return players.map(p=>({
                     name: p.name,
                     rating: p.rating,
@@ -525,7 +528,7 @@ const _sess = getSession();
         try {
             const state = JSON.parse(localStorage.getItem('foots_state_v7'));
             if(!state) return CARDS_DB_DEFAULT;
-            const typeMap = {'card-standard':'brown','card-blue':'blue','card-red':'red','card-violet':'red'};
+            const typeMap = {'card-standard':'brown','card-blue':'blue','card-red':'red','card-violet':'violet'};
             const all = [...(state.pitch||[]), ...(state.reserve||[])].filter(c=>c&&c.type&&c.name)
                 .map(c=>({name:c.name,rating:c.rating,type:typeMap[c.type]||'brown'}));
             return all.length >= 4 ? all : CARDS_DB_DEFAULT;
