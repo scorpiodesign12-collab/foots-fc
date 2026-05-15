@@ -262,7 +262,7 @@ const _sess = getSession();
 <!-- === 1. МЕНЮ "ИГРАТЬ" === -->
 <div id="play-menu-screen" class="screen active">
     <div class="modal-header">
-        <div class="modal-back"><i class="fa-solid fa-arrow-left"></i></div>
+        <div class="modal-back" onclick="window.location.href='menu.html'"><i class="fa-solid fa-arrow-left"></i></div>
         <div class="modal-title">ИГРАТЬ</div>
     </div>
     <div class="content-wrapper">
@@ -325,8 +325,8 @@ const _sess = getSession();
             </div>
             <div class="vs-block">
                 <div class="player-col">
-                    <div class="avatar-circle"><img src="https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg" alt="Club Logo"></div>
-                    <div class="player-name">DREAM TEAM</div>
+                    <div class="avatar-circle"><img id="my-club-logo" src="" alt="Club Logo"></div>
+                    <div class="player-name" id="my-name-display">-</div>
                 </div>
                 <div class="vs-text">VS</div>
                 <div class="player-col">
@@ -366,7 +366,7 @@ const _sess = getSession();
             <div class="vs-block" style="margin-top: 50px;">
                 <div class="player-col">
                     <div class="avatar-circle"><img src="https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg" alt="Club"></div>
-                    <div class="player-name">DREAM TEAM</div>
+                    <div class="player-name" id="my-name-display">-</div>
                 </div>
                 <div class="vs-text">VS</div>
                 <div class="player-col">
@@ -399,7 +399,7 @@ const _sess = getSession();
                 <div class="scoreboard">
                     <div class="score-name" id="opponent-score-name">OPPONENT</div>
                     <div class="score-numbers"><span class="score-box" id="score-opp">0</span> - <span class="score-box" id="score-plr">0</span></div>
-                    <div class="score-name player">DREAM TEAM</div>
+                    <div class="score-name player" id="my-score-name">-</div>
                 </div>
                 
                 <div class="table-slots">
@@ -441,6 +441,22 @@ const _sess = getSession();
         await db.from('profiles').update({coins:gameData.coins}).eq('id',_sess.id);
       }, 1000);
     }
+
+    // === Populate session data ===
+    (function(){
+      const s = getSession();
+      if(!s) return;
+      const clubSrc = CLUBS[s.club]||CLUBS[0];
+      const nm = s.username.toUpperCase();
+      ['my-name-display','my-name-display2'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.innerText=nm;
+      });
+      ['my-club-logo','my-club-logo2'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.src=clubSrc;
+      });
+      const sn=document.getElementById('my-score-name'); if(sn) sn.innerText=nm;
+    })();
+
     updateUI();
 
     // === ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ ===
@@ -647,7 +663,7 @@ const _sess = getSession();
     }
 
     function closeMatchEnd() {
-        switchScreen('play-menu-screen');
+        window.location.href='menu.html';
     }
 
     function forceSurrender() {
