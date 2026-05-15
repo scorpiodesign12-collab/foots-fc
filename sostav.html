@@ -291,20 +291,19 @@ let currentCoins = _sess ? (_sess.coins||0) : 0;
     const {data} = await db.from('profiles').select('coins').eq('id',_sess.id).single();
     if(data){ currentCoins = data.coins; updateCoinsUI(); }
 })();
-const allNames = ["Smith","Jones","Williams","Brown","Taylor","Davies","Evans","Thomas","Roberts","Walker","White","Harris","Martin","Clark"];
-let availableNames = [...allNames];
 
-function getUniqueName() {
-    if (!availableNames.length) availableNames = [...allNames];
-    return availableNames.splice(Math.floor(Math.random() * availableNames.length), 1)[0];
-}
+const typeRanges = {'card-standard':[55,69],'card-blue':[70,79],'card-red':[80,89],'card-violet':[90,99]};
+const allNames = ["Smith","Jones","Williams","Brown","Taylor","Davies","Evans","Thomas","Roberts","Walker","White","Harris","Martin","Clark","Moore","Anderson","Jackson","Thompson","Garcia","Martinez"];
+function rndInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+
+// === SHARED PLAYER DB ===
+function getPlayersDB(){return JSON.parse(localStorage.getItem('foots_players_db')||'[]');}
+function savePlayersDB(arr){localStorage.setItem('foots_players_db',JSON.stringify(arr));}
 
 const maxUpgrades = {'card-standard':5,'card-blue':4,'card-red':3,'card-violet':1};
 const sellMultipliers = {'card-standard':10,'card-blue':20,'card-red':35,'card-violet':60};
-const typeRanges = {'card-standard':[55,69],'card-blue':[70,79],'card-red':[80,89],'card-violet':[90,99]};
 
 let selectedOriginalCardId = null;
-// { card, originSlot } — карта в зоне продажи и откуда она пришла
 let sellState = null;
 
 // === TOAST ===
@@ -332,8 +331,6 @@ function formatCoins(num) {
 
 function updateCoinsUI() {
     document.getElementById('coins-balance').innerText = formatCoins(currentCoins);
-    localStorage.setItem('foots_coins_v7', currentCoins.toString());
-    // Sync to Supabase
     clearTimeout(window._coinSaveTimer);
     window._coinSaveTimer = setTimeout(async()=>{
       await db.from('profiles').update({coins:currentCoins}).eq('id',_sess.id);
@@ -345,12 +342,15 @@ function getRandomInt(min, max) { return Math.floor(Math.random()*(max-min+1))+m
 function isPitchSlot(slot) {
     return document.getElementById('pitch-grid').contains(slot);
 }
+function isReserveSlot(slot) {
+    return document.getElementById('reserve-grid').contains(slot);
+}
 
 function getPitchCardCount() {
     return document.querySelectorAll('#pitch-grid .card').length;
 }
 
-function createCardElement(type, rating, name, upgrades=0) {
+function createCardElement(type, rating, name, upgrades=0, playerId=null) {
     const slot = document.createElement('div');
     slot.className = 'card-slot';
     if (type) {
@@ -361,7 +361,8 @@ function createCardElement(type, rating, name, upgrades=0) {
         card.dataset.name = name;
         card.dataset.type = type;
         card.dataset.upgrades = upgrades;
-        card.id = 'card-' + Math.random().toString(36).substr(2,9);
+        card.dataset.playerId = playerId || ('card-' + Math.random().toString(36).substr(2,9));
+        card.id = card.dataset.playerId;
         card.innerHTML = `<div class="card-rating">${rating}</div><div class="card-name">${name}</div>`;
         setupDrag(card);
         slot.appendChild(card);
@@ -370,17 +371,23 @@ function createCardElement(type, rating, name, upgrades=0) {
     return slot;
 }
 
+// Save pitch/reserve state back to players DB
 function saveGameState() {
-    const state = {pitch:[],reserve:[]};
-    document.querySelectorAll('#pitch-grid .card-slot').forEach(slot => {
-        const c = slot.querySelector('.card');
-        state.pitch.push(c?{type:c.dataset.type,rating:parseInt(c.dataset.rating),name:c.dataset.name,upgrades:parseInt(c.dataset.upgrades)||0}:null);
+    const players = getPlayersDB();
+    // Reset all placement flags
+    players.forEach(p=>{ p.inPitch=false; p.inReserve=false; p.upgrades = p.upgrades||0; });
+
+    document.querySelectorAll('#pitch-grid .card').forEach(card => {
+        const pid = card.dataset.playerId;
+        const pl = players.find(p=>p.id===pid);
+        if(pl){ pl.inPitch=true; pl.upgrades=parseInt(card.dataset.upgrades)||0; pl.rating=parseInt(card.dataset.rating); }
     });
-    document.querySelectorAll('#reserve-grid .card-slot').forEach(slot => {
-        const c = slot.querySelector('.card');
-        state.reserve.push(c?{type:c.dataset.type,rating:parseInt(c.dataset.rating),name:c.dataset.name,upgrades:parseInt(c.dataset.upgrades)||0}:null);
+    document.querySelectorAll('#reserve-grid .card').forEach(card => {
+        const pid = card.dataset.playerId;
+        const pl = players.find(p=>p.id===pid);
+        if(pl){ pl.inReserve=true; pl.upgrades=parseInt(card.dataset.upgrades)||0; pl.rating=parseInt(card.dataset.rating); }
     });
-    localStorage.setItem('foots_state_v7', JSON.stringify(state));
+    savePlayersDB(players);
     updateAllPlayersSection();
 }
 
@@ -409,13 +416,12 @@ function setupDropZone(slot) {
         const originSlot = dragged.parentElement;
         const targetCard = slot.querySelector('.card');
 
-        // Запрещаем перетаскивать из основы (8 игроков) в запас если это уведёт карту с поля
-        // и там не будет замены
+        // Prevent removing from pitch if count would go below 8, unless swapping
         const fromPitch = isPitchSlot(originSlot);
         const toPitch = isPitchSlot(slot);
+        const fromAllPlayers = originSlot.classList.contains('all-player-slot');
 
         if (fromPitch && !toPitch && !targetCard) {
-            // Пытаются убрать карту из основы в пустой резервный слот
             if (getPitchCardCount() <= 8) {
                 showToast('⚠️ Минимум 8 игроков в основе!');
                 return;
@@ -427,6 +433,8 @@ function setupDropZone(slot) {
         dragged.classList.remove('dragging');
         updateTeamRating();
         saveGameState();
+        // Refresh all players section to remove moved card
+        updateAllPlayersSection();
     });
 }
 
@@ -451,19 +459,13 @@ function setupSellZone() {
         if (!dragged) return;
 
         const originSlot = dragged.parentElement;
-
-        // Нельзя продать из основы если игроков ровно 8
         if (isPitchSlot(originSlot) && getPitchCardCount() <= 8) {
             showToast('⚠️ Минимум 8 игроков в основе! Переведи в запас сначала.');
             return;
         }
 
-        // Если в зоне уже есть карта — вернуть её обратно
-        if (sellState) {
-            returnCardFromSellZone();
-        }
+        if (sellState) { returnCardFromSellZone(); }
 
-        // Запомнить откуда пришла карта и убрать её из оригинального слота
         sellState = { card: dragged, originSlot: originSlot };
         zone.appendChild(dragged);
 
@@ -482,11 +484,9 @@ function setupSellZone() {
 function returnCardFromSellZone() {
     if (!sellState) return;
     const {card, originSlot} = sellState;
-    // Вернуть карту в исходный слот
-    if (originSlot && document.body.contains(originSlot)) {
+    if (originSlot && document.body.contains(originSlot) && !originSlot.classList.contains('all-player-slot')) {
         originSlot.appendChild(card);
     } else {
-        // Если слот уже не существует (был временный) — в резерв
         const freeSlot = [...document.querySelectorAll('#reserve-grid .card-slot')].find(s=>!s.querySelector('.card'));
         if (freeSlot) freeSlot.appendChild(card);
     }
@@ -496,9 +496,7 @@ function returnCardFromSellZone() {
     saveGameState();
 }
 
-function cancelSell() {
-    returnCardFromSellZone();
-}
+function cancelSell() { returnCardFromSellZone(); }
 
 function confirmSell() {
     if (!sellState) return;
@@ -507,6 +505,12 @@ function confirmSell() {
     const price = parseInt(card.dataset.rating)*mult;
     card.classList.add('vanishing');
     setTimeout(()=>{
+        // Remove from players DB
+        const players = getPlayersDB();
+        const idx = players.findIndex(p=>p.id===card.dataset.playerId);
+        if(idx!==-1) players.splice(idx,1);
+        savePlayersDB(players);
+
         card.remove();
         sellState = null;
         currentCoins += price;
@@ -626,43 +630,60 @@ function closeTutorial() {
     localStorage.setItem('foots_tutorial_v7','1');
 }
 
-function generateInitialPlayers() {
-    // Только коричневые и синие для новичков
-    const starterTypes = ['card-standard','card-blue'];
+// Generate initial starter players if DB is empty (first time ever)
+function generateStarterPlayers() {
     const players = [];
-    // 4 коричневых + 4 синих
-    for (let i=0;i<4;i++) {
-        const [min,max]=typeRanges['card-standard'];
-        players.push({type:'card-standard',rating:getRandomInt(min,max),name:getUniqueName()});
+    for(let i=0;i<4;i++){
+        const [mn,mx]=typeRanges['card-standard'];
+        const name=allNames[rndInt(0,allNames.length-1)].toUpperCase();
+        players.push({id:'p'+Date.now()+i+'a',type:'card-standard',rating:rndInt(mn,mx),name,upgrades:0,inPitch:true,inReserve:false,isLimited:false,limitedImg:null});
     }
-    for (let i=0;i<4;i++) {
-        const [min,max]=typeRanges['card-blue'];
-        players.push({type:'card-blue',rating:getRandomInt(min,max),name:getUniqueName()});
+    for(let i=0;i<4;i++){
+        const [mn,mx]=typeRanges['card-blue'];
+        const name=allNames[rndInt(0,allNames.length-1)].toUpperCase();
+        players.push({id:'p'+Date.now()+i+'b',type:'card-blue',rating:rndInt(mn,mx),name,upgrades:0,inPitch:true,inReserve:false,isLimited:false,limitedImg:null});
     }
-    return players.sort(()=>Math.random()-0.5);
+    return players;
 }
 
 function initGame() {
-    // Сбросить сохранение если структура устарела (старые данные с красными/фиолетовыми новичками)
     const pitchGrid = document.getElementById('pitch-grid');
     const reserveGrid = document.getElementById('reserve-grid');
-    const saved = localStorage.getItem('foots_state_v7');
-
     pitchGrid.innerHTML=''; reserveGrid.innerHTML='';
 
-    if (saved) {
-        const state = JSON.parse(saved);
-        // Восстановить ровно 8 слотов в основе
-        const pitchData = state.pitch.slice(0,8);
-        while(pitchData.length<8) pitchData.push(null);
-        pitchData.forEach(p=>pitchGrid.appendChild(p?createCardElement(p.type,p.rating,p.name,p.upgrades):createCardElement(null)));
-        state.reserve.forEach(p=>reserveGrid.appendChild(p?createCardElement(p.type,p.rating,p.name,p.upgrades):createCardElement(null)));
-    } else {
-        const players = generateInitialPlayers();
-        players.slice(0,8).forEach(p=>pitchGrid.appendChild(createCardElement(p.type,p.rating,p.name)));
-        for(let i=0;i<4;i++) reserveGrid.appendChild(createCardElement(null));
+    let players = getPlayersDB();
+
+    // First ever launch — no players at all
+    if(players.length === 0) {
+        players = generateStarterPlayers();
+        savePlayersDB(players);
     }
 
+    // Ensure exactly 8 pitch slots and 4 reserve slots are rendered
+    const pitchPlayers = players.filter(p=>p.inPitch).slice(0,8);
+    const reservePlayers = players.filter(p=>p.inReserve).slice(0,4);
+
+    // If somehow fewer than 8 are in pitch, auto-assign unplaced players
+    const unplaced = players.filter(p=>!p.inPitch && !p.inReserve);
+    while(pitchPlayers.length < 8 && unplaced.length > 0) {
+        const p = unplaced.shift();
+        p.inPitch = true;
+        pitchPlayers.push(p);
+    }
+
+    // Render pitch (always 8 slots)
+    for(let i=0;i<8;i++) {
+        const p = pitchPlayers[i];
+        pitchGrid.appendChild(p ? createCardElement(p.type,p.rating,p.name,p.upgrades,p.id) : createCardElement(null));
+    }
+
+    // Render reserve (always 4 slots)
+    for(let i=0;i<4;i++) {
+        const p = reservePlayers[i];
+        reserveGrid.appendChild(p ? createCardElement(p.type,p.rating,p.name,p.upgrades,p.id) : createCardElement(null));
+    }
+
+    savePlayersDB(players);
     updateTeamRating(); updateCoinsUI(); setupSellZone();
     if (!localStorage.getItem('foots_tutorial_v7')) {
         document.getElementById('tutorial-modal').classList.add('active');
@@ -672,25 +693,79 @@ function initGame() {
 
 function updateAllPlayersSection() {
     const container = document.getElementById('all-players-content');
-    const allCards = document.querySelectorAll('#pitch-grid .card, #reserve-grid .card');
-    if (!allCards.length) {
+    const players = getPlayersDB();
+    // Players NOT in pitch and NOT in reserve (bench players)
+    const benchPlayers = players.filter(p=>!p.inPitch && !p.inReserve);
+
+    if (!benchPlayers.length) {
         container.className = 'empty-panel all-players-content';
-        container.innerHTML = 'Здесь пока ничего нет';
+        container.innerHTML = 'Все игроки уже в составе или запасе';
         return;
     }
     container.className = 'all-players-content';
     container.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;padding:15px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:15px;';
     container.innerHTML = '';
-    allCards.forEach(c => {
-        const clone = c.cloneNode(true);
-        clone.style.cssText = 'width:90px;height:120px;pointer-events:none;flex-shrink:0;border-radius:10px;';
-        clone.removeAttribute('draggable');
-        clone.removeAttribute('id');
-        container.appendChild(clone);
+
+    benchPlayers.forEach(p => {
+        // Make a draggable card with a wrapper slot
+        const slot = document.createElement('div');
+        slot.className = 'card-slot all-player-slot';
+        slot.style.cssText = 'width:90px;height:120px;flex-shrink:0;border:none;background:transparent;position:relative;';
+
+        // If player has a limitedImg, show it
+        const card = document.createElement('div');
+        if(p.isLimited && p.limitedImg) {
+            card.className = 'card card-violet';
+            card.style.backgroundImage = `url('${p.limitedImg}')`;
+        } else {
+            card.className = `card ${p.type}`;
+        }
+        card.draggable = true;
+        card.dataset.rating = p.rating;
+        card.dataset.name = p.name;
+        card.dataset.type = p.isLimited ? 'card-violet' : p.type;
+        card.dataset.upgrades = p.upgrades || 0;
+        card.dataset.playerId = p.id;
+        card.id = p.id;
+        card.style.cssText = 'width:90px;height:120px;border-radius:10px;cursor:grab;';
+        card.innerHTML = `<div class="card-rating" style="font-size:20px;top:6px;left:6px">${p.rating}</div><div class="card-name" style="font-size:11px;padding:20px 4px 6px">${p.name}</div>`;
+        setupDrag(card);
+        slot.appendChild(card);
+
+        // Drop zone on bench slot itself (so drag from pitch goes to bench)
+        slot.addEventListener('dragover', e=>e.preventDefault());
+        slot.addEventListener('drop', e=>{
+            e.preventDefault();
+            const draggedId = e.dataTransfer.getData('text/plain');
+            const dragged = document.getElementById(draggedId);
+            if (!dragged) return;
+            const originSlot = dragged.parentElement;
+            // Don't allow dropping from pitch if that would leave <8
+            if(isPitchSlot(originSlot) && getPitchCardCount() <= 8) {
+                showToast('⚠️ Минимум 8 игроков в основе!');
+                return;
+            }
+            // Mark the dragged player as unplaced in DB
+            const players2 = getPlayersDB();
+            const dp = players2.find(x=>x.id===dragged.dataset.playerId);
+            if(dp){ dp.inPitch=false; dp.inReserve=false; }
+            // Mark bench card as now going to origin slot
+            if(isPitchSlot(originSlot) || isReserveSlot(originSlot)) {
+                const bp = players2.find(x=>x.id===card.dataset.playerId);
+                if(bp){ bp.inPitch=isPitchSlot(originSlot); bp.inReserve=isReserveSlot(originSlot); }
+                originSlot.appendChild(card);
+            }
+            savePlayersDB(players2);
+            updateTeamRating();
+            updateAllPlayersSection();
+        });
+
+        container.appendChild(slot);
     });
 }
 
 window.onload = initGame;
+
 </script>
 </body>
 </html>

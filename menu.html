@@ -474,7 +474,7 @@ function showPackOpening() {
         <img src="${p.img}" style="width:min(240px,65vw);border-radius:16px;display:block;box-shadow:0 20px 60px rgba(0,0,0,.8)">
       </div>
       <div class="fifa-name">${p.name}</div>
-      <button onclick="document.getElementById('pack-open-ov').remove()" style="margin-top:6px;background:#fff;color:#000;border:none;padding:14px 48px;border-radius:30px;font-size:14px;font-weight:800;letter-spacing:1px;cursor:pointer;text-transform:uppercase">В КОЛЛЕКЦИЮ</button>
+      <button onclick="addPlayerToDB('card-violet',90,p.name,true,p.img);document.getElementById('pack-open-ov').remove()" style="margin-top:6px;background:#fff;color:#000;border:none;padding:14px 48px;border-radius:30px;font-size:14px;font-weight:800;letter-spacing:1px;cursor:pointer;text-transform:uppercase">В КОЛЛЕКЦИЮ</button>
     </div>
   `;
   document.body.appendChild(ov);
@@ -512,9 +512,29 @@ function switchTab(el,id) {
   if(id!=='tab-casino') resetCasino();
 }
 
+// === SHARED PLAYER DB ===
+const allNames = ["Smith","Jones","Williams","Brown","Taylor","Davies","Evans","Thomas","Roberts","Walker","White","Harris","Martin","Clark","Moore","Anderson","Jackson","Thompson","Garcia","Martinez"];
+const typeRanges = {'card-standard':[55,69],'card-blue':[70,79],'card-red':[80,89],'card-violet':[90,99]};
+function rndInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function getPlayersDB(){return JSON.parse(localStorage.getItem('foots_players_db')||'[]');}
+function savePlayersDB(arr){localStorage.setItem('foots_players_db',JSON.stringify(arr));}
+function addPlayerToDB(type, rating, name, isLimited, limitedImg){
+  const db2=getPlayersDB();
+  db2.push({id:'p'+Date.now()+Math.random().toString(36).slice(2),type,rating,name,upgrades:0,inPitch:false,inReserve:false,isLimited:!!isLimited,limitedImg:limitedImg||null});
+  savePlayersDB(db2);
+}
+function makePlayer(type){
+  const [mn,mx]=typeRanges[type];
+  const name=allNames[rndInt(0,allNames.length-1)].toUpperCase();
+  return{type,rating:rndInt(mn,mx),name};
+}
+
 function claimPack() {
   if(G.claimed) return;
   G.inv.brown+=5; G.inv.blue+=3; G.claimed=true; G.tl=86400; save();
+  // Add players to shared DB
+  for(let i=0;i<5;i++){const p=makePlayer('card-standard');addPlayerToDB(p.type,p.rating,p.name);}
+  for(let i=0;i<3;i++){const p=makePlayer('card-blue');addPlayerToDB(p.type,p.rating,p.name);}
 }
 
 const ICONS={
@@ -571,7 +591,13 @@ function showResult(res,bet) {
 function claimReward() {
   if(reward) {
     if(reward.type==='coins') G.coins+=reward.val;
-    else G.inv[reward.color]++;
+    else {
+      G.inv[reward.color]++;
+      const typeMap={'brown':'card-standard','blue':'card-blue','red':'card-red'};
+      const t=typeMap[reward.color]||'card-standard';
+      const p=makePlayer(t);
+      addPlayerToDB(p.type,p.rating,p.name);
+    }
     save();
   }
   resetCasino();
