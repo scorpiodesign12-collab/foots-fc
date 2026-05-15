@@ -136,14 +136,17 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #050505; f
 .fut-name { font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
 
 /* Оформление карточек под цвет рубашки */
-.fut-card.brown { border-color: #B8860B; background: linear-gradient(135deg, #7a5a00 0%, #b8860b 45%, #d4af37 50%, #b8860b 55%, #5c4400 100%); }
-.fut-card.brown .fut-player-img svg { color: #d4af37; } /* Золотая футболка */
+.fut-card.brown { border-color: #cd853f; background: url('https://i.ibb.co/5gv5RPkD/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(205,127,50,0.5); }
+.fut-card.brown:hover { box-shadow: 0 0 25px rgba(205,127,50,0.9); }
 
-.fut-card.blue { border-color: #1e90ff; background: linear-gradient(135deg, #001f3f 0%, #004080 45%, #1e90ff 50%, #004080 55%, #001020 100%); }
-.fut-card.blue .fut-player-img svg { color: #1e90ff; } /* Синяя футболка */
+.fut-card.blue { border-color: #1e90ff; background: url('https://i.ibb.co/0ypNsDHR/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(0,150,255,0.5); }
+.fut-card.blue:hover { box-shadow: 0 0 25px rgba(0,150,255,0.9); }
 
-.fut-card.red { border-color: #ff3333; background: linear-gradient(135deg, #3e0000 0%, #8b0000 45%, #ff3333 50%, #8b0000 55%, #2a0000 100%); }
-.fut-card.red .fut-player-img svg { color: #ff3333; } /* Красная футболка */
+.fut-card.red { border-color: #ff4500; background: url('https://i.ibb.co/pjN8ns3X/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(255,50,50,0.5); }
+.fut-card.red:hover { box-shadow: 0 0 25px rgba(255,50,50,0.9); }
+
+.fut-card.violet { border-color: #a020f0; background: url('https://i.ibb.co/b0Dv2GN/image.webp') center/cover no-repeat; box-shadow: 0 0 10px rgba(160,32,240,0.5); }
+.fut-card.violet:hover { box-shadow: 0 0 25px rgba(160,32,240,0.9); }
 
 /* Рубашка карт FOOTS CARDS */
 .card-back { background: repeating-linear-gradient(-45deg, #111, #111 8px, #1a1a1a 8px, #1a1a1a 16px); display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -320,7 +323,7 @@ const _sess = getSession();
         <div class="lobby-container">
             <div class="room-code-box" onclick="copyRoomCode(this)">
                 <div class="room-code-hint">Нажми, чтобы скопировать</div>
-                <span id="room-code-text">#S5R4Y</span>
+                <span id="room-code-text">...</span>
             </div>
             <div class="vs-block">
                 <div class="player-col">
@@ -430,7 +433,7 @@ const _sess = getSession();
       if(data){ gameData.coins = data.coins; updateUI(); }
     })();
     function updateUI() { document.getElementById('ui-global-coins').innerText = formatNum(gameData.coins); }
-    function formatNum(n) { return n >= 1000000 ? (n/1000000).toFixed(1)+'M' : (n >= 1000 ? (n/1000).toFixed(1)+'K' : n); }
+    function formatNum(n) { return n>=1e6?(n/1e6).toFixed(1).replace('.0','')+'M':n>=1000?(n/1000).toFixed(1).replace('.0','')+'K':n; }
     function saveAndUpdate() {
       updateUI();
       // Sync session coins
@@ -483,12 +486,109 @@ const _sess = getSession();
         });
     }
 
-    function joinMatch() {
+    // === МУЛЬТИПЛЕЕР: УПРАВЛЕНИЕ КОМНАТАМИ ===
+    let currentRoomCode = null;
+    let roomSubscription = null;
+    let myPlayerRole = null; // 'host' or 'guest'
+
+    function genRoomCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for(let i=0;i<5;i++) code += chars[Math.floor(Math.random()*chars.length)];
+        return '#' + code;
+    }
+
+    async function createRoom() {
+        const sess = getSession();
+        if(!sess) return;
+        currentRoomCode = genRoomCode();
+        myPlayerRole = 'host';
+        document.getElementById('room-code-text').innerText = currentRoomCode;
+        // Сохранить комнату в Supabase
+        await db.from('rooms').upsert({
+            code: currentRoomCode,
+            host_id: sess.id,
+            host_name: sess.username,
+            guest_id: null,
+            guest_name: null,
+            status: 'waiting'
+        });
+        // Подписаться на изменения комнаты
+        if(roomSubscription) roomSubscription.unsubscribe();
+        roomSubscription = db.channel('room:' + currentRoomCode)
+            .on('postgres_changes', {event:'UPDATE', schema:'public', table:'rooms', filter:`code=eq.${currentRoomCode}`},
+                payload => {
+                    const row = payload.new;
+                    if(row.guest_id && row.status === 'waiting') {
+                        // Гость подключился!
+                        const oppCol = document.querySelector('#lobby-screen .player-col:last-child');
+                        oppCol.innerHTML = `
+                            <div class="avatar-circle bot"><i class="fa-solid fa-user"></i></div>
+                            <div class="player-name">${row.guest_name.toUpperCase()}</div>
+                        `;
+                        // Через 1 сек запускаем игру
+                        setTimeout(async() => {
+                            await db.from('rooms').update({status:'playing'}).eq('code', currentRoomCode);
+                            startGame('friend');
+                        }, 1000);
+                    }
+                })
+            .subscribe();
+    }
+
+    async function joinMatch() {
         let input = document.getElementById('joinCodeInput');
-        if(input.value.trim().length >= 5) {
-            input.value = '';
-            startGame('friend_guest');
-        } else alert("Введите код (мин 5 символов)");
+        const code = input.value.trim().toUpperCase();
+        if(!code || code.length < 5) { alert('Введите код (мин 5 символов)'); return; }
+        const fullCode = code.startsWith('#') ? code : '#' + code;
+        const sess = getSession();
+        if(!sess) return;
+
+        const {data:room, error} = await db.from('rooms').select('*').eq('code', fullCode).eq('status','waiting').single();
+        if(error || !room) { alert('Комната не найдена или уже занята. Проверьте код.'); return; }
+        if(room.host_id === sess.id) { alert('Нельзя подключиться к своей комнате.'); return; }
+
+        // Обновить комнату — гость подключился
+        await db.from('rooms').update({
+            guest_id: sess.id,
+            guest_name: sess.username
+        }).eq('code', fullCode);
+
+        currentRoomCode = fullCode;
+        myPlayerRole = 'guest';
+        input.value = '';
+
+        // Подписаться на статус — ждём когда хост запустит игру
+        if(roomSubscription) roomSubscription.unsubscribe();
+        roomSubscription = db.channel('room-guest:' + fullCode)
+            .on('postgres_changes', {event:'UPDATE', schema:'public', table:'rooms', filter:`code=eq.${fullCode}`},
+                payload => {
+                    if(payload.new.status === 'playing') {
+                        startGame('friend');
+                    }
+                })
+            .subscribe();
+
+        // Показать экран ожидания с именем хоста
+        switchScreen('bot-loading-screen');
+        document.getElementById('bot-random-name').innerText = room.host_name.toUpperCase();
+        document.getElementById('game-mode-title').innerText = 'ПОДКЛЮЧЕНИЕ...';
+    }
+
+    // Вызывать createRoom при переходе на экран лобби
+    const _origSwitchScreen = switchScreen;
+    function switchScreen(screenId) {
+        _origSwitchScreen(screenId);
+        if(screenId === 'lobby-screen') {
+            // Инициализировать данные хоста
+            const s = getSession();
+            if(s) {
+                document.getElementById('my-name-display').innerText = s.username.toUpperCase();
+                const clubSrc = CLUBS[s.club]||CLUBS[0];
+                document.getElementById('my-club-logo').src = clubSrc;
+            }
+            createRoom();
+        }
     }
 
     function startBotMatch() {
@@ -512,7 +612,12 @@ const _sess = getSession();
         try {
             const state = JSON.parse(localStorage.getItem('foots_state_v7'));
             if(!state) return CARDS_DB_DEFAULT;
-            const all = [...(state.pitch||[]), ...(state.reserve||[])].filter(c=>c&&c.type&&c.name);
+            const typeMap = {'card-standard':'brown','card-blue':'blue','card-red':'red','card-violet':'violet'};
+            const all = [...(state.pitch||[]), ...(state.reserve||[])].filter(c=>c&&c.type&&c.name).map(c=>({
+                name: c.name,
+                rating: c.rating,
+                type: typeMap[c.type] || c.type
+            }));
             return all.length >= 4 ? all : CARDS_DB_DEFAULT;
         } catch(e) { return CARDS_DB_DEFAULT; }
     }
