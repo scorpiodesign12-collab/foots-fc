@@ -198,6 +198,16 @@ const _sess = getSession();
 
 <div class="mwrap">
   <div class="minner">
+    <!-- Рейтинг команды -->
+    <div id="menu-rating-wrap" style="display:flex;align-items:center;gap:10px;margin-bottom:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:8px 20px 8px 12px">
+      <svg viewBox="0 0 100 120" width="32" height="38" style="flex-shrink:0">
+        <path d="M50 5 L95 20 L90 80 L50 115 L10 80 L5 20 Z" fill="#ffffff" stroke="#ddd" stroke-width="2"/>
+      </svg>
+      <div>
+        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px">Рейтинг команды</div>
+        <div id="menu-team-rating" style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:800;color:#000;background:#fff;border-radius:6px;padding:0 8px;margin-top:2px;display:inline-block;min-width:40px;text-align:center">0</div>
+      </div>
+    </div>
     <div class="mgrid">
       <div class="mplay" onclick="window.location.href='play.html'">
         <i class="fa-regular fa-futbol"></i><span>ИГРАТЬ</span>
@@ -408,6 +418,14 @@ const save = () => {
 function upd() {
   document.getElementById('ui-coins').innerText = fmt(G.coins);
   document.querySelectorAll('.ui-coins-shop').forEach(e=>e.innerText=fmt(G.coins));
+  // Team rating from players DB
+  const pls = getPlayersDB();
+  const pitchPls = pls.filter(p=>p.inPitch);
+  if(pitchPls.length > 0) {
+    const avg = Math.round(pitchPls.reduce((s,p)=>s+p.rating,0)/pitchPls.length);
+    const el = document.getElementById('menu-team-rating');
+    if(el) el.innerText = avg;
+  }
   // Barca pack limit
   if(typeof G.barcaLimit === 'undefined') G.barcaLimit = 8;
   let badge = document.getElementById('lim-badge');
@@ -556,7 +574,13 @@ const allNames = ["Smith","Jones","Williams","Brown","Taylor","Davies","Evans","
 const typeRanges = {'card-standard':[55,69],'card-blue':[70,79],'card-red':[80,89],'card-violet':[90,99]};
 function rndInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function getPlayersDB(){return JSON.parse(localStorage.getItem('foots_players_db')||'[]');}
-function savePlayersDB(arr){localStorage.setItem('foots_players_db',JSON.stringify(arr));}
+function savePlayersDB(arr){
+  localStorage.setItem('foots_players_db',JSON.stringify(arr));
+  clearTimeout(window._playersSaveTimer);
+  window._playersSaveTimer = setTimeout(async()=>{
+    try { await db.from('profiles').update({players_data: arr}).eq('id',_sess.id); } catch(e){}
+  }, 800);
+}
 function addPlayerToDB(type, rating, name, isLimited, limitedImg){
   const db2=getPlayersDB();
   db2.push({id:'p'+Date.now()+Math.random().toString(36).slice(2),type,rating,name,upgrades:0,inPitch:false,inReserve:false,isLimited:!!isLimited,limitedImg:limitedImg||null});

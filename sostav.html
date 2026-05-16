@@ -296,9 +296,28 @@ const typeRanges = {'card-standard':[55,69],'card-blue':[70,79],'card-red':[80,8
 const allNames = ["Smith","Jones","Williams","Brown","Taylor","Davies","Evans","Thomas","Roberts","Walker","White","Harris","Martin","Clark","Moore","Anderson","Jackson","Thompson","Garcia","Martinez"];
 function rndInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 
-// === SHARED PLAYER DB ===
+// === SHARED PLAYER DB — синхронизация через Supabase ===
 function getPlayersDB(){return JSON.parse(localStorage.getItem('foots_players_db')||'[]');}
-function savePlayersDB(arr){localStorage.setItem('foots_players_db',JSON.stringify(arr));}
+function savePlayersDB(arr){
+  localStorage.setItem('foots_players_db',JSON.stringify(arr));
+  // Debounced sync to Supabase
+  clearTimeout(window._playersSaveTimer);
+  window._playersSaveTimer = setTimeout(async()=>{
+    try {
+      await db.from('profiles').update({players_data: arr}).eq('id',_sess.id);
+    } catch(e){ console.warn('players sync err', e); }
+  }, 800);
+}
+async function loadPlayersFromServer() {
+  try {
+    const {data} = await db.from('profiles').select('players_data').eq('id',_sess.id).single();
+    if(data && data.players_data && Array.isArray(data.players_data) && data.players_data.length > 0) {
+      localStorage.setItem('foots_players_db', JSON.stringify(data.players_data));
+      return data.players_data;
+    }
+  } catch(e){ console.warn('players load err', e); }
+  return null;
+}
 
 const maxUpgrades = {'card-standard':5,'card-blue':4,'card-red':3,'card-violet':1};
 const sellMultipliers = {'card-standard':10,'card-blue':20,'card-red':35,'card-violet':60};
@@ -367,7 +386,11 @@ function createCardElement(type, rating, name, upgrades=0, playerId=null) {
         card.id = card.dataset.playerId;
         if(pl && pl.isLimited && pl.limitedImg) {
             card.style.backgroundImage = `url('${pl.limitedImg}')`;
-            // Design is baked into the card image — no overlay text
+            card.style.backgroundSize = 'cover';
+            card.style.backgroundPosition = 'center';
+            card.style.cursor = 'grab';
+            card.style.pointerEvents = 'auto';
+            // No overlay text — design is in the image
             card.innerHTML = '';
         } else {
             card.innerHTML = `<div class="card-rating">${rating}</div><div class="card-name">${name}</div>`;
@@ -799,7 +822,12 @@ function updateAllPlayersSection() {
     });
 }
 
-window.onload = initGame;
+window.onload = async function() {
+  // Try to load players from Supabase first (for cross-device sync)
+  const serverPlayers = await loadPlayersFromServer();
+  // serverPlayers already set to localStorage inside loadPlayersFromServer
+  initGame();
+};
 
 </script>
 </body>
