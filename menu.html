@@ -234,6 +234,9 @@ const _sess = getSession();
     <div class="plogo"><img id="prof-logo" src="" alt="Club"></div>
     <div class="pname" id="prof-name">...</div>
     <div class="ppass" id="prof-pass">Загрузка...</div>
+    <button onclick="logout()" style="margin-top:28px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.12);padding:12px 36px;border-radius:30px;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:10px" onmouseover="this.style.background='rgba(255,50,50,0.12)';this.style.borderColor='rgba(255,50,50,0.3)';this.style.color='#ff6464'" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.55)'">
+      <i class="fa-solid fa-right-from-bracket"></i> ВЫЙТИ
+    </button>
   </div>
 </div>
 
@@ -533,6 +536,10 @@ setInterval(()=>{
 
 const show=id=>{let m=document.getElementById(id);m.classList.add('active');setTimeout(()=>m.style.opacity=1,10)};
 const hide=id=>{let m=document.getElementById(id);m.style.opacity=0;setTimeout(()=>m.classList.remove('active'),300)};
+function logout(){
+  localStorage.removeItem('foots_session');
+  window.location.href='register.html';
+}
 document.getElementById('profile-modal').addEventListener('click',function(e){if(e.target===this)hide('profile-modal')});
 
 function switchTab(el,id) {
