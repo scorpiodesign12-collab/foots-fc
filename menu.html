@@ -474,10 +474,25 @@ function showPackOpening() {
         <img src="${p.img}" style="width:min(240px,65vw);border-radius:16px;display:block;box-shadow:0 20px 60px rgba(0,0,0,.8)">
       </div>
       <div class="fifa-name">${p.name}</div>
-      <button onclick="addPlayerToDB('card-violet',90,p.name,true,p.img);document.getElementById('pack-open-ov').remove()" style="margin-top:6px;background:#fff;color:#000;border:none;padding:14px 48px;border-radius:30px;font-size:14px;font-weight:800;letter-spacing:1px;cursor:pointer;text-transform:uppercase">В КОЛЛЕКЦИЮ</button>
+      <button id="btn-to-collection" style="margin-top:6px;background:#fff;color:#000;border:none;padding:14px 48px;border-radius:30px;font-size:14px;font-weight:800;letter-spacing:1px;cursor:pointer;text-transform:uppercase">В КОЛЛЕКЦИЮ</button>
     </div>
   `;
   document.body.appendChild(ov);
+
+  // Store chosen player globally so button can access it
+  window._pendingLimitedPlayer = p;
+
+  // "В КОЛЛЕКЦИЮ" button — stop propagation so it doesn't trigger ov click
+  document.getElementById('btn-to-collection').addEventListener('click', function(e) {
+    e.stopPropagation();
+    const pl = window._pendingLimitedPlayer;
+    if(pl) {
+      addPlayerToDB('card-violet', 90, pl.name, true, pl.img);
+      window._pendingLimitedPlayer = null;
+    }
+    const ovEl = document.getElementById('pack-open-ov');
+    if(ovEl) ovEl.remove();
+  });
 
   let step = 1;
   ov.addEventListener('click', () => {

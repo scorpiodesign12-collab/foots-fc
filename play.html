@@ -195,6 +195,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #050505; f
 .end-title.lose { color: #F44336; text-shadow: 0 0 20px rgba(244, 67, 54, 0.5); }
 .end-title.draw { color: #bbb; margin-bottom: 20px; text-shadow: none; }
 .end-reward { font-family: 'Orbitron', sans-serif; font-size: 36px; font-weight: 800; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.end-subtitle { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.35); letter-spacing: 1px; margin-top: -12px; margin-bottom: 20px; text-align: center; }
 
 /* CONNECTION STATUS */
 .conn-status { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #666; text-transform: uppercase; z-index: 999; transition: 0.3s; }
@@ -485,6 +486,7 @@ const _sess = getSession();
   <div class="end-modal" id="match-end-modal">
     <div class="end-title" id="end-title-text">ПОБЕДА</div>
     <div class="end-reward" id="end-reward-text" style="color: #fff;"></div>
+    <div class="end-subtitle" id="end-subtitle-text" style="display:none;"></div>
     <button class="btn-primary" onclick="closeMatchEnd()">В ГЛАВНОЕ МЕНЮ</button>
   </div>
 </div>
@@ -761,7 +763,6 @@ function subscribeToRoom(code) {
 
   realtimeChannel.on('broadcast', { event: 'player_left' }, () => {
     if(document.getElementById('game-board-screen').classList.contains('active')) {
-      // Show win result screen — opponent abandoned
       const coinsDiff = 2000;
       gameData.coins += coinsDiff;
       saveAndUpdate();
@@ -769,13 +770,16 @@ function subscribeToRoom(code) {
       const modal = document.getElementById('match-end-modal');
       const title = document.getElementById('end-title-text');
       const reward = document.getElementById('end-reward-text');
+      const subtitle = document.getElementById('end-subtitle-text');
+
       title.innerText = "ПОБЕДА";
       title.className = "end-title win";
-      reward.innerHTML = `${svgCoinHTML} +${coinsDiff} (СОПЕРНИК ВЫШЕЛ)`;
+      reward.innerHTML = `${svgCoinHTML} +${coinsDiff}`;
       reward.style.color = "#4CAF50";
       reward.style.display = "flex";
-      modal.classList.add('active');
+      if(subtitle) { subtitle.innerText = "Ваш соперник вышел из матча"; subtitle.style.display = "block"; }
 
+      modal.classList.add('active');
       leaveRoom();
     }
   });
@@ -1108,7 +1112,11 @@ function showMatchResult() {
   let modal = document.getElementById('match-end-modal');
   let title = document.getElementById('end-title-text');
   let reward = document.getElementById('end-reward-text');
+  let subtitle = document.getElementById('end-subtitle-text');
   
+  // Always hide subtitle by default (only shown for "opponent left")
+  if(subtitle) { subtitle.style.display = 'none'; subtitle.innerText = ''; }
+
   let coinsDiff = 0;
   reward.style.display = "flex"; 
 
@@ -1149,8 +1157,15 @@ function forceSurrender() {
     gameData.coins -= 500;
     if(gameData.coins < 0) gameData.coins = 0;
     saveAndUpdate();
-    if(currentMode === 'online') leaveRoom();
-    switchScreen('play-menu-screen');
+    if(currentMode === 'online') {
+      // Broadcast leave BEFORE cleanup so opponent gets the message
+      broadcastEvent('player_left', {});
+      // Then clean up locally without triggering our own player_left
+      if(realtimeChannel) { db.removeChannel(realtimeChannel); realtimeChannel = null; }
+      if(myRole === 'host' && roomCode) { db.from('online_rooms').delete().eq('code', roomCode).then(()=>{}); }
+      roomCode = null; myRole = null;
+    }
+    window.location.href = 'menu.html';
   }
 }
 </script>
