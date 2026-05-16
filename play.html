@@ -88,9 +88,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #050505; f
 .online-status-bar { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px; }
 
 /* TURN INDICATOR */
-.turn-indicator { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; padding: 4px 14px; border-radius: 20px; z-index: 50; transition: 0.3s; }
-.turn-indicator.my-turn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
-.turn-indicator.opp-turn { background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.05); }
+.turn-indicator { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; padding: 5px 18px; border-radius: 20px; transition: 0.3s; }
+.turn-indicator.my-turn { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.35); }
+.turn-indicator.opp-turn { background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.07); }
 
 /* GAME BOARD */
 .game-board { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 10px 0 30px; overflow: hidden; }
@@ -456,12 +456,11 @@ const _sess = getSession();
     <div class="modal-title" id="game-mode-title">МАТЧ</div>
   </div>
   
-  <div id="turn-indicator" class="turn-indicator my-turn" style="display:none;">МОЙ ХОД</div>
-
   <div class="content-wrapper" style="padding-top: 70px;">
     <div class="game-board">
       <div class="opponent-row" id="opponent-cards"></div>
       <div class="center-zone" style="position:relative;">
+        <div id="turn-indicator" class="turn-indicator my-turn" style="display:none; position:static; transform:none; margin-bottom: -18px;">МОЙ ХОД</div>
         <div class="scoreboard">
           <div class="score-name" id="opponent-score-name">OPPONENT</div>
           <div class="score-numbers"><span class="score-box" id="score-opp">0</span> - <span class="score-box" id="score-plr">0</span></div>
@@ -570,12 +569,13 @@ function copyRoomCode(element) {
 // CARDS DB
 // ===========================
 const CARDS_DB_DEFAULT = [
-  { name: "DAVIS", rating: 65, type: "brown" },
-  { name: "ROMERO",rating: 70, type: "brown" },
-  { name: "SILVA", rating: 82, type: "blue" },
-  { name: "ALVES", rating: 85, type: "blue" },
-  { name: "KING",  rating: 94, type: "red" },
-  { name: "MESSI", rating: 99, type: "red" }
+  { name: "DAVIS",   rating: 62, type: "brown" },
+  { name: "ROMERO",  rating: 58, type: "brown" },
+  { name: "MILLER",  rating: 61, type: "brown" },
+  { name: "WILSON",  rating: 59, type: "brown" },
+  { name: "TAYLOR",  rating: 63, type: "brown" },
+  { name: "ADAMS",   rating: 57, type: "brown" },
+  { name: "SILVA",   rating: 72, type: "blue" }
 ];
 
 function getPlayerCards() {
@@ -761,12 +761,22 @@ function subscribeToRoom(code) {
 
   realtimeChannel.on('broadcast', { event: 'player_left' }, () => {
     if(document.getElementById('game-board-screen').classList.contains('active')) {
-      showToast('Соперник покинул матч');
-      setTimeout(()=>{
-        gameData.coins += 500;
-        saveAndUpdate();
-        closeMatchEnd();
-      }, 2000);
+      // Show win result screen — opponent abandoned
+      const coinsDiff = 2000;
+      gameData.coins += coinsDiff;
+      saveAndUpdate();
+
+      const modal = document.getElementById('match-end-modal');
+      const title = document.getElementById('end-title-text');
+      const reward = document.getElementById('end-reward-text');
+      title.innerText = "ПОБЕДА";
+      title.className = "end-title win";
+      reward.innerHTML = `${svgCoinHTML} +${coinsDiff} (СОПЕРНИК ВЫШЕЛ)`;
+      reward.style.color = "#4CAF50";
+      reward.style.display = "flex";
+      modal.classList.add('active');
+
+      leaveRoom();
     }
   });
 
@@ -869,10 +879,10 @@ function startLocalGame(mode, oppNameStr) {
 }
 
 // ===========================
-// ONLINE: RENDER VISIBLE HANDS
+// ONLINE: RENDER HANDS
 // ===========================
 function renderOnlineHands() {
-  // My cards (playable)
+  // My cards (playable, fully visible)
   let playerRow = document.getElementById('player-cards');
   playerRow.innerHTML = "";
   myCards8.forEach((card, idx) => {
@@ -884,14 +894,14 @@ function renderOnlineHands() {
     playerRow.appendChild(div);
   });
 
-  // Opponent cards (visible but not playable — their hand revealed!)
+  // Opponent cards — shown as card-backs (hidden from player)
   let oppRow = document.getElementById('opponent-cards');
   oppRow.innerHTML = "";
   oppCards8.forEach((card, idx) => {
     let div = document.createElement('div');
-    div.className = `opp-visible-card ${card.type}`;
+    div.className = `card-back`;
     div.dataset.idx = idx;
-    div.innerHTML = `<div class="fut-rating" style="position:absolute;top:6px;left:6px;font-family:'Orbitron',sans-serif;font-size:16px;font-weight:800;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,0.8);">${card.rating}</div><div class="fut-bottom" style="position:absolute;bottom:0;left:0;width:100%;height:25px;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;border-top:1px solid rgba(255,255,255,0.2);"><span class="fut-name">${card.name}</span></div>`;
+    div.dataset.played = '0';
     oppRow.appendChild(div);
   });
 }
@@ -901,7 +911,7 @@ function getMyCardEl(idx) {
 }
 
 function getOppCardEl(idx) {
-  return document.querySelector(`#opponent-cards .opp-visible-card[data-idx="${idx}"]`);
+  return document.querySelector(`#opponent-cards [data-idx="${idx}"]`);
 }
 
 // ===========================
@@ -955,9 +965,9 @@ function playOnlineCard(idx) {
 function onReceiveOppCard(oppIdx, oppCard) {
   oppPlayedIndices.add(oppIdx);
 
-  // Mark opp card as played visually
+  // Mark opp card-back as played (fade it)
   const oppEl = getOppCardEl(oppIdx);
-  if(oppEl) oppEl.classList.add('played');
+  if(oppEl) { oppEl.style.opacity = '0.25'; oppEl.style.filter = 'grayscale(1)'; }
 
   if(pendingMyCard) {
     // I already played, resolve now
@@ -969,7 +979,7 @@ function onReceiveOppCard(oppIdx, oppCard) {
     onlineRoundData[onlineRound].oppCard = oppCard;
     onlineRoundData[onlineRound].oppIdx = oppIdx;
 
-    // Show opp's card in slot (face down, then flip)
+    // Show opp's card in slot (face down)
     const slotOpp = document.getElementById('slot-opp');
     slotOpp.innerHTML = `<div class="card-back" style="width:100%;height:100%;"></div>`;
   }
