@@ -358,9 +358,6 @@ function createCardElement(type, rating, name, upgrades=0, playerId=null) {
         const pl = playerId ? players.find(p=>p.id===playerId) : null;
         const card = document.createElement('div');
         card.className = `card ${type}`;
-        if(pl && pl.isLimited && pl.limitedImg) {
-            card.style.backgroundImage = `url('${pl.limitedImg}')`;
-        }
         card.draggable = true;
         card.dataset.rating = rating;
         card.dataset.name = name;
@@ -368,7 +365,13 @@ function createCardElement(type, rating, name, upgrades=0, playerId=null) {
         card.dataset.upgrades = upgrades;
         card.dataset.playerId = playerId || ('card-' + Math.random().toString(36).substr(2,9));
         card.id = card.dataset.playerId;
-        card.innerHTML = `<div class="card-rating">${rating}</div><div class="card-name">${name}</div>`;
+        if(pl && pl.isLimited && pl.limitedImg) {
+            card.style.backgroundImage = `url('${pl.limitedImg}')`;
+            // Design is baked into the card image — no overlay text
+            card.innerHTML = '';
+        } else {
+            card.innerHTML = `<div class="card-rating">${rating}</div><div class="card-name">${name}</div>`;
+        }
         setupDrag(card);
         slot.appendChild(card);
     }
@@ -756,7 +759,11 @@ function updateAllPlayersSection() {
         card.dataset.playerId = p.id;
         card.id = p.id;
         // No inline size — card fills its slot via CSS .card{width:100%;height:100%}
-        card.innerHTML = `<div class="card-rating" style="font-size:20px;top:6px;left:6px">${p.rating}</div><div class="card-name" style="font-size:11px;padding:20px 4px 6px">${p.name}</div>`;
+        if(p.isLimited && p.limitedImg) {
+            card.innerHTML = ''; // No overlay — design is in the card image
+        } else {
+            card.innerHTML = `<div class="card-rating" style="font-size:20px;top:6px;left:6px">${p.rating}</div><div class="card-name" style="font-size:11px;padding:20px 4px 6px">${p.name}</div>`;
+        }
         setupDrag(card);
         slot.appendChild(card);
 
