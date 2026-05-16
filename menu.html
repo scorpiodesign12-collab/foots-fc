@@ -244,7 +244,13 @@ const _sess = getSession();
     <div class="plogo"><img id="prof-logo" src="" alt="Club"></div>
     <div class="pname" id="prof-name">...</div>
     <div class="ppass" id="prof-pass">Загрузка...</div>
-    <button onclick="logout()" style="margin-top:28px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.12);padding:12px 36px;border-radius:30px;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:10px" onmouseover="this.style.background='rgba(255,50,50,0.12)';this.style.borderColor='rgba(255,50,50,0.3)';this.style.color='#ff6464'" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.55)'">
+    <!-- Active Sessions Button -->
+    <button onclick="showSessions()" style="margin-top:16px;background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.1);padding:10px 28px;border-radius:30px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:8px">
+      <i class="fa-solid fa-mobile-screen-button"></i> АКТИВНЫЕ СЕАНСЫ
+    </button>
+    <!-- Sessions list (hidden by default) -->
+    <div id="sessions-panel" style="display:none;margin-top:14px;width:min(340px,85vw);max-height:200px;overflow-y:auto;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px 16px"></div>
+    <button onclick="logout()" style="margin-top:20px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.12);padding:12px 36px;border-radius:30px;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:10px" onmouseover="this.style.background='rgba(255,50,50,0.12)';this.style.borderColor='rgba(255,50,50,0.3)';this.style.color='#ff6464'" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.55)'">
       <i class="fa-solid fa-right-from-bracket"></i> ВЫЙТИ
     </button>
   </div>
@@ -393,6 +399,30 @@ const save = () => {
   },800);
   upd();
 };
+// Device/browser detection
+function detectDevice() {
+    const ua = navigator.userAgent;
+    let os = 'Unknown OS';
+    if(/Windows NT 10/.test(ua)) os = 'Windows 10';
+    else if(/Windows NT 11/.test(ua) || /Windows NT 10.*Win64/.test(ua)) os = 'Windows 11';
+    else if(/Windows/.test(ua)) os = 'Windows';
+    else if(/Android/.test(ua)) { const m = ua.match(/Android ([0-9.]+)/); os = 'Android' + (m ? ' ' + m[1] : ''); }
+    else if(/iPhone|iPad/.test(ua)) { const m = ua.match(/OS ([0-9_]+)/); os = 'iOS' + (m ? ' ' + m[1].replace(/_/g,'.') : ''); }
+    else if(/Mac/.test(ua)) os = 'macOS';
+    else if(/Linux/.test(ua)) os = 'Linux';
+    
+    let browser = 'Unknown';
+    if(/YaBrowser/.test(ua)) browser = 'Yandex';
+    else if(/Edg\//.test(ua)) browser = 'Edge';
+    else if(/OPR\/|Opera/.test(ua)) browser = 'Opera';
+    else if(/Chrome/.test(ua)) browser = 'Chrome';
+    else if(/Firefox/.test(ua)) browser = 'Firefox';
+    else if(/Safari/.test(ua)) browser = 'Safari';
+    
+    const isMobile = /Mobi|Android|iPhone|iPad/.test(ua);
+    return { os, browser, mobile: isMobile, lastSeen: new Date().toISOString() };
+}
+
 // Load from Supabase on page start
 (async()=>{
   const {data:prof} = await db.from('profiles').select('coins,password,club,players_data').eq('id',_sess.id).single();
@@ -402,7 +432,7 @@ const save = () => {
   }
   const _localKey = 'fmData_' + (_sess ? _sess.id : 'anon');
   let local = JSON.parse(localStorage.getItem(_localKey)||'null');
-  G.coins = prof ? prof.coins : 10000000;
+  G.coins = (prof && typeof prof.coins === "number") ? prof.coins : 0;
   // barcaLimit is personal — stored in localStorage per user
   if(local && typeof local.barcaLimit === 'number') {
     G.barcaLimit = local.barcaLimit;
@@ -415,8 +445,26 @@ const save = () => {
   const clubSrc = CLUBS[_sess.club]||CLUBS[0];
   const pi=document.getElementById('prof-logo'); if(pi) pi.src=clubSrc;
   const pn=document.getElementById('prof-name'); if(pn) pn.innerText=_sess.username;
-  const pp=document.getElementById('prof-pass'); if(pp) pp.innerText=prof?'ID: '+_sess.id.slice(0,8):'';
+  const pp=document.getElementById('prof-pass'); if(pp) pp.innerText = 'ID: ' + (_sess && _sess.id ? _sess.id.slice(0,8).toUpperCase() : '???');
   const hi=document.getElementById('hdr-club-img'); if(hi) hi.src=clubSrc;
+
+  // FIX 4: Save current session device info to Supabase
+  try {
+    const devInfo = detectDevice();
+    const sessKey = 'foots_dev_' + _sess.id;
+    let localSessions = JSON.parse(localStorage.getItem(sessKey)||'[]');
+    // Keep only sessions from last 30 days, max 10
+    const now = Date.now();
+    localSessions = localSessions.filter(s => now - new Date(s.lastSeen).getTime() < 30*86400000);
+    // Update or add current device entry (match by os+browser+mobile)
+    const idx = localSessions.findIndex(s => s.os===devInfo.os && s.browser===devInfo.browser && s.mobile===devInfo.mobile);
+    if(idx>=0) localSessions[idx] = devInfo; else localSessions.push(devInfo);
+    localSessions = localSessions.slice(-10);
+    localStorage.setItem(sessKey, JSON.stringify(localSessions));
+    // Try to save to Supabase (column may not exist — ignore error)
+    await db.from('profiles').update({sessions_log: localSessions}).eq('id', _sess.id);
+  } catch(e) { /* sessions_log column may not exist yet */ }
+
   upd();
 })();
 function upd() {
@@ -424,7 +472,7 @@ function upd() {
   document.querySelectorAll('.ui-coins-shop').forEach(e=>e.innerText=fmt(G.coins));
   // Team rating from players DB
   const pls = getPlayersDB();
-  const pitchPls = pls.filter(p=>p.inPitch);
+  const pitchPls = pls.filter(p=>p.inPitch).slice(0,8);
   if(pitchPls.length > 0) {
     const avg = Math.round(pitchPls.reduce((s,p)=>s+p.rating,0)/pitchPls.length);
     const el = document.getElementById('menu-team-rating');
@@ -563,6 +611,36 @@ function logout(){
   window.location.href='register.html';
 }
 document.getElementById('profile-modal').addEventListener('click',function(e){if(e.target===this)hide('profile-modal')});
+
+function showSessions() {
+  const panel = document.getElementById('sessions-panel');
+  if(panel.style.display !== 'none') { panel.style.display='none'; return; }
+  // Read sessions from localStorage
+  const sessKey = 'foots_dev_' + (_sess ? _sess.id : 'x');
+  const sessions = JSON.parse(localStorage.getItem(sessKey)||'[]');
+  if(!sessions.length) {
+    panel.innerHTML = '<div style="color:rgba(255,255,255,0.35);font-size:12px;text-align:center;padding:10px">Нет данных о сеансах</div>';
+    panel.style.display = 'block';
+    return;
+  }
+  const deviceIcon = s => s.mobile ? 'fa-mobile-screen-button' : 'fa-desktop';
+  const timeAgo = iso => {
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if(diff < 60) return 'только что';
+    if(diff < 3600) return Math.floor(diff/60) + ' мин назад';
+    if(diff < 86400) return Math.floor(diff/3600) + ' ч назад';
+    return Math.floor(diff/86400) + ' д назад';
+  };
+  panel.innerHTML = sessions.slice().reverse().map(s => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.07)">
+      <i class="fa-solid ${deviceIcon(s)}" style="color:rgba(255,255,255,0.5);font-size:18px;flex-shrink:0"></i>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#fff">${s.os} · ${s.browser}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35)">${timeAgo(s.lastSeen)}</div>
+      </div>
+    </div>`).join('');
+  panel.style.display = 'block';
+}
 
 function switchTab(el,id) {
   if(el.classList.contains('dis')) return;
