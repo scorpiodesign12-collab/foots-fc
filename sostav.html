@@ -469,9 +469,6 @@ function moveCardToSlot(movedCard, targetSlot) {
     // Swap or move
     if(targetCard) {
         originSlot.appendChild(targetCard);
-        makeCardDraggable(targetCard);
-        makeCardClickable(targetCard);
-        makeSlotInteractive(originSlot);
     }
     targetSlot.appendChild(movedCard);
 
@@ -514,41 +511,62 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// === DRAG-AND-DROP (desktop mouse drag) ===
-let _dragCard = null;
-function makeCardDraggable(card) {
-    card.setAttribute('draggable', 'true');
-    card.addEventListener('dragstart', function(e) {
-        _dragCard = card;
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', card.dataset.playerId || '');
-        setTimeout(() => card.classList.add('drag-active'), 0);
-        deselectAll();
-    });
-    card.addEventListener('dragend', function() {
-        card.classList.remove('drag-active');
-        document.querySelectorAll('.card-slot.drag-over').forEach(s => s.classList.remove('drag-over'));
-        _dragCard = null;
+// === MOUSE DRAG (desktop) — avoids HTML5 drag API quirks ===
+let _pd = null; // pending drag: {card, originSlot, startX, startY, ghost, dragging}
+const DRAG_THRESH = 6;
+
+function initMouseDrag(card) {
+    card.addEventListener('mousedown', function(e) {
+        if(e.button !== 0) return;
+        _pd = {card, originSlot: card.parentElement, startX: e.clientX, startY: e.clientY, ghost: null, dragging: false};
     });
 }
 
+document.addEventListener('mousemove', function(e) {
+    if(!_pd) return;
+    const dx = e.clientX - _pd.startX, dy = e.clientY - _pd.startY;
+    if(!_pd.dragging && Math.hypot(dx, dy) > DRAG_THRESH) {
+        _pd.dragging = true;
+        const rect = _pd.card.getBoundingClientRect();
+        const g = _pd.card.cloneNode(true);
+        g.removeAttribute('id');
+        g.style.cssText = `position:fixed;width:${rect.width}px;height:${rect.height}px;left:${rect.left}px;top:${rect.top}px;pointer-events:none;z-index:9999;opacity:0.8;border-radius:10px;box-shadow:0 20px 40px rgba(0,0,0,.7);transition:none;transform:scale(1.08)`;
+        document.body.appendChild(g);
+        _pd.ghost = g;
+        _pd.card.classList.add('drag-active');
+        deselectAll();
+    }
+    if(_pd.dragging && _pd.ghost) {
+        const hw = _pd.ghost.offsetWidth/2, hh = _pd.ghost.offsetHeight/2;
+        _pd.ghost.style.left = (e.clientX - hw) + 'px';
+        _pd.ghost.style.top  = (e.clientY - hh) + 'px';
+        document.querySelectorAll('.card-slot.drag-over').forEach(s => s.classList.remove('drag-over'));
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const slot = el ? el.closest('.card-slot') : null;
+        if(slot) slot.classList.add('drag-over');
+    }
+});
+
+document.addEventListener('mouseup', function(e) {
+    if(!_pd) return;
+    const pd = _pd; _pd = null;
+    document.querySelectorAll('.card-slot.drag-over').forEach(s => s.classList.remove('drag-over'));
+    if(pd.ghost) {
+        pd.ghost.remove();
+        pd.card.classList.remove('drag-active');
+        if(pd.dragging) {
+            const el = document.elementFromPoint(e.clientX, e.clientY);
+            const targetSlot = el ? el.closest('.card-slot') : null;
+            if(targetSlot && targetSlot !== pd.originSlot) {
+                moveCardToSlot(pd.card, targetSlot);
+            }
+        }
+    }
+});
+
+// Slot interactive = just click (mouse drag uses elementFromPoint, no slot events needed)
 function makeSlotInteractive(slot) {
     makeSlotClickable(slot);
-    slot.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        slot.classList.add('drag-over');
-    });
-    slot.addEventListener('dragleave', function(e) {
-        if(!slot.contains(e.relatedTarget)) slot.classList.remove('drag-over');
-    });
-    slot.addEventListener('drop', function(e) {
-        e.preventDefault();
-        slot.classList.remove('drag-over');
-        if(_dragCard && _dragCard !== slot.querySelector('.card')) {
-            moveCardToSlot(_dragCard, slot);
-        }
-    });
 }
 
 // === TOUCH DRAG (mobile) ===
@@ -629,7 +647,7 @@ function createCardElement(type, rating, name, upgrades=0, playerId=null) {
             card.innerHTML = `<div class="card-rating">${rating}</div><div class="card-name">${name}</div>`;
         }
         makeCardClickable(card);
-        makeCardDraggable(card);
+        initMouseDrag(card);
         initTouchDrag(card);
         slot.appendChild(card);
     }
@@ -954,7 +972,7 @@ function updateAllPlayersSection() {
         card.id = p.id;
 
         makeCardClickable(card);
-        makeCardDraggable(card);
+        initMouseDrag(card);
         initTouchDrag(card);
         makeSlotInteractive(slot);
         slot.appendChild(card);

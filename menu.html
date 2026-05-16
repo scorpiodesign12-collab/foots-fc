@@ -424,48 +424,53 @@ function detectDevice() {
 }
 
 // Load from Supabase on page start
+// STEP 1: Fetch coins separately (lightweight query — mirrors sostav.html approach)
 (async()=>{
-  const {data:prof} = await db.from('profiles').select('coins,password,club,players_data').eq('id',_sess.id).single();
-  // Sync players from server so rating is correct on any device
-  if(prof && prof.players_data && Array.isArray(prof.players_data) && prof.players_data.length > 0) {
-    localStorage.setItem('foots_players_db', JSON.stringify(prof.players_data));
-  }
-  const _localKey = 'fmData_' + (_sess ? _sess.id : 'anon');
-  let local = JSON.parse(localStorage.getItem(_localKey)||'null');
-  G.coins = (prof && typeof prof.coins === "number") ? prof.coins : 0;
-  // barcaLimit is personal — stored in localStorage per user
-  if(local && typeof local.barcaLimit === 'number') {
-    G.barcaLimit = local.barcaLimit;
-  } else {
-    G.barcaLimit = 8; // First ever visit — full limit
-  }
-  if(local){ G.inv=local.inv||{brown:0,blue:0,red:0}; G.claimed=local.claimed||false; G.tl=local.tl||86400; }
-  G._loaded=true;
-  // Update profile modal
-  const clubSrc = CLUBS[_sess.club]||CLUBS[0];
-  const pi=document.getElementById('prof-logo'); if(pi) pi.src=clubSrc;
-  const pn=document.getElementById('prof-name'); if(pn) pn.innerText=_sess.username;
-  const pp=document.getElementById('prof-pass'); if(pp) pp.innerText = 'ID: ' + (_sess && _sess.id ? _sess.id.slice(0,8).toUpperCase() : '???');
-  const hi=document.getElementById('hdr-club-img'); if(hi) hi.src=clubSrc;
-
-  // FIX 4: Save current session device info to Supabase
   try {
-    const devInfo = detectDevice();
-    const sessKey = 'foots_dev_' + _sess.id;
-    let localSessions = JSON.parse(localStorage.getItem(sessKey)||'[]');
-    // Keep only sessions from last 30 days, max 10
-    const now = Date.now();
-    localSessions = localSessions.filter(s => now - new Date(s.lastSeen).getTime() < 30*86400000);
-    // Update or add current device entry (match by os+browser+mobile)
-    const idx = localSessions.findIndex(s => s.os===devInfo.os && s.browser===devInfo.browser && s.mobile===devInfo.mobile);
-    if(idx>=0) localSessions[idx] = devInfo; else localSessions.push(devInfo);
-    localSessions = localSessions.slice(-10);
-    localStorage.setItem(sessKey, JSON.stringify(localSessions));
-    // Try to save to Supabase (column may not exist — ignore error)
-    await db.from('profiles').update({sessions_log: localSessions}).eq('id', _sess.id);
-  } catch(e) { /* sessions_log column may not exist yet */ }
+    const {data: cd} = await db.from('profiles').select('coins').eq('id',_sess.id).single();
+    if(cd && typeof cd.coins === 'number') { G.coins = cd.coins; upd(); }
+  } catch(e) { console.warn('coins fetch err', e); }
+})();
 
-  upd();
+// STEP 2: Fetch full profile (players_data, club etc.) — may be slower
+(async()=>{
+  try {
+    const {data:prof} = await db.from('profiles').select('password,club,players_data').eq('id',_sess.id).single();
+    // Sync players from server so rating is correct on any device
+    if(prof && prof.players_data && Array.isArray(prof.players_data) && prof.players_data.length > 0) {
+      localStorage.setItem('foots_players_db', JSON.stringify(prof.players_data));
+    }
+    const _localKey = 'fmData_' + (_sess ? _sess.id : 'anon');
+    let local = JSON.parse(localStorage.getItem(_localKey)||'null');
+    // barcaLimit is personal — stored in localStorage per user
+    if(local && typeof local.barcaLimit === 'number') {
+      G.barcaLimit = local.barcaLimit;
+    } else {
+      G.barcaLimit = 8;
+    }
+    if(local){ G.inv=local.inv||{brown:0,blue:0,red:0}; G.claimed=local.claimed||false; G.tl=local.tl||86400; }
+    G._loaded=true;
+    // Update profile modal
+    const clubSrc = CLUBS[_sess.club]||CLUBS[0];
+    const pi=document.getElementById('prof-logo'); if(pi) pi.src=clubSrc;
+    const pn=document.getElementById('prof-name'); if(pn) pn.innerText=_sess.username;
+    const pp=document.getElementById('prof-pass'); if(pp) pp.innerText = 'ID: ' + (_sess && _sess.id ? _sess.id.slice(0,8).toUpperCase() : '???');
+    const hi=document.getElementById('hdr-club-img'); if(hi) hi.src=clubSrc;
+    // Save session device info
+    try {
+      const devInfo = detectDevice();
+      const sessKey = 'foots_dev_' + _sess.id;
+      let localSessions = JSON.parse(localStorage.getItem(sessKey)||'[]');
+      const now = Date.now();
+      localSessions = localSessions.filter(s => now - new Date(s.lastSeen).getTime() < 30*86400000);
+      const idx = localSessions.findIndex(s => s.os===devInfo.os && s.browser===devInfo.browser && s.mobile===devInfo.mobile);
+      if(idx>=0) localSessions[idx] = devInfo; else localSessions.push(devInfo);
+      localSessions = localSessions.slice(-10);
+      localStorage.setItem(sessKey, JSON.stringify(localSessions));
+      await db.from('profiles').update({sessions_log: localSessions}).eq('id', _sess.id);
+    } catch(e) {}
+    upd();
+  } catch(e) { console.warn('profile fetch err', e); }
 })();
 function upd() {
   document.getElementById('ui-coins').innerText = fmt(G.coins);
