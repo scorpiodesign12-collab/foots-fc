@@ -459,6 +459,11 @@ function moveCardToSlot(movedCard, targetSlot) {
     // === FIX BUG 1 & 2: Handle drag-to-sell zone ===
     const sellZone = document.getElementById('sell-drop-zone');
     if(targetSlot === sellZone) {
+        // Only 1 card allowed — if zone already occupied, block
+        if(sellState) {
+            showToast('⚠️ Сначала продай или верни текущую карту!');
+            return;
+        }
         // Check if card can leave pitch
         if(isPitchSlot(originSlot) && getPitchCardCount() <= 8) {
             showToast('⚠️ Минимум 8 игроков в основе! Переведи в запас сначала.');
@@ -733,7 +738,11 @@ function setupSellZone() {
             deselectAll();
             return;
         }
-        if(sellState) { returnCardFromSellZone(); }
+        if(sellState) {
+            showToast('⚠️ Сначала продай или верни текущую карту!');
+            deselectAll();
+            return;
+        }
         sellState = { card: selectedCard, originSlot: originSlot };
         // Reset inline styles so card renders at full zone size
         selectedCard.style.removeProperty('width');
@@ -790,30 +799,33 @@ function cancelSell() { returnCardFromSellZone(); }
 function confirmSell() {
     if (!sellState) return;
     const {card} = sellState;
-    // Use the already-displayed price stored in sellState
     let price = sellState.price;
     if(price === undefined) {
-        const players = getPlayersDB();
-        const pl = players.find(p=>p.id===card.dataset.playerId);
+        const tmpPlayers = getPlayersDB();
+        const pl = tmpPlayers.find(p=>p.id===card.dataset.playerId);
         if(pl && pl.isLimited) {
             price = Math.floor(Math.random() * 500001) + 500000;
         } else {
             price = parseInt(card.dataset.rating) * (sellMultipliers[card.dataset.type]||10);
         }
     }
+    const cardPlayerId = card.dataset.playerId;
+    const earnedPrice = price;
+    sellState = null;
     card.classList.add('vanishing');
     setTimeout(()=>{
-        const idx = players.findIndex(p=>p.id===card.dataset.playerId);
+        const players = getPlayersDB();
+        const idx = players.findIndex(p=>p.id===cardPlayerId);
         if(idx!==-1) players.splice(idx,1);
         savePlayersDB(players);
         card.remove();
-        sellState = null;
-        currentCoins += price;
+        currentCoins += earnedPrice;
         updateCoinsUI();
         clearSellZoneUI();
         updateTeamRating();
         saveGameState();
         populateCarousel();
+        updateAllPlayersSection();
     },500);
 }
 
