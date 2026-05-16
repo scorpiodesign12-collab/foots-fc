@@ -41,7 +41,7 @@ html,body{width:100%;height:100%;overflow-x:hidden;background:#050505;font-famil
 /* Toast уведомление */
 .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(255,50,50,0.95);color:#fff;padding:14px 24px;border-radius:12px;font-weight:700;font-size:14px;z-index:9999;transition:transform .3s ease,opacity .3s;opacity:0;pointer-events:none;text-align:center;white-space:nowrap;backdrop-filter:blur(10px);border:1px solid rgba(255,80,80,0.5)}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
-.sell-drop-zone .card{z-index:2;width:100%;height:100%}
+.sell-drop-zone .card{z-index:2;width:100%!important;height:100%!important;position:relative!important;transform:none!important;opacity:1!important;min-width:unset!important;min-height:unset!important;max-width:none!important;max-height:none!important}
 .sell-arrow i{color:rgba(255,255,255,0.3);font-size:20px}
 .sell-info{display:flex;flex-direction:column;gap:10px;align-items:center;flex:1}
 .sell-price-display{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:800;display:flex;align-items:center;gap:8px}
@@ -467,6 +467,13 @@ function moveCardToSlot(movedCard, targetSlot) {
         // Place card in sell zone (same logic as click-based sell)
         if(sellState) { returnCardFromSellZone(); }
         sellState = { card: movedCard, originSlot: originSlot };
+        // Reset any inline size/transform styles so card fills the zone cleanly
+        movedCard.style.removeProperty('width');
+        movedCard.style.removeProperty('height');
+        movedCard.style.removeProperty('transform');
+        movedCard.style.removeProperty('opacity');
+        movedCard.style.removeProperty('min-width');
+        movedCard.style.removeProperty('min-height');
         sellZone.appendChild(movedCard);
 
         const players = getPlayersDB();
@@ -728,6 +735,13 @@ function setupSellZone() {
         }
         if(sellState) { returnCardFromSellZone(); }
         sellState = { card: selectedCard, originSlot: originSlot };
+        // Reset inline styles so card renders at full zone size
+        selectedCard.style.removeProperty('width');
+        selectedCard.style.removeProperty('height');
+        selectedCard.style.removeProperty('transform');
+        selectedCard.style.removeProperty('opacity');
+        selectedCard.style.removeProperty('min-width');
+        selectedCard.style.removeProperty('min-height');
         zone.appendChild(selectedCard);
 
         const players = getPlayersDB();
@@ -752,6 +766,13 @@ function setupSellZone() {
 function returnCardFromSellZone() {
     if (!sellState) return;
     const {card, originSlot} = sellState;
+    // Reset inline styles so card renders correctly back in its slot
+    card.style.removeProperty('width');
+    card.style.removeProperty('height');
+    card.style.removeProperty('transform');
+    card.style.removeProperty('opacity');
+    card.style.removeProperty('min-width');
+    card.style.removeProperty('min-height');
     if (originSlot && document.body.contains(originSlot) && !originSlot.classList.contains('all-player-slot')) {
         originSlot.appendChild(card);
     } else {
