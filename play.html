@@ -585,7 +585,12 @@ function getPlayerCards() {
     const players = JSON.parse(localStorage.getItem('foots_players_db')||'[]');
     if(players.length >= 4) {
       const typeMap = {'card-standard':'brown','card-blue':'blue','card-red':'red','card-violet':'violet'};
-      return players.map(p=>({ name: p.name, rating: p.rating, type: typeMap[p.type] || 'brown' }));
+      return players.map(p=>({
+        name: p.name,
+        rating: p.rating,
+        type: typeMap[p.type] || 'brown',
+        limitedImg: (p.isLimited && p.limitedImg) ? p.limitedImg : null
+      }));
     }
   } catch(e){}
   try {
@@ -593,7 +598,7 @@ function getPlayerCards() {
     if(!state) return CARDS_DB_DEFAULT;
     const typeMap = {'card-standard':'brown','card-blue':'blue','card-red':'red','card-violet':'violet'};
     const all = [...(state.pitch||[]), ...(state.reserve||[])].filter(c=>c&&c.type&&c.name)
-      .map(c=>({name:c.name,rating:c.rating,type:typeMap[c.type]||'brown'}));
+      .map(c=>({name:c.name,rating:c.rating,type:typeMap[c.type]||'brown',limitedImg:null}));
     return all.length >= 4 ? all : CARDS_DB_DEFAULT;
   } catch(e) { return CARDS_DB_DEFAULT; }
 }
@@ -601,8 +606,32 @@ function getPlayerCards() {
 const svgCoinHTML = `<svg class="svg-coin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v6c0 1.5 2.5 2.5 5 2.5s5-1 5-2.5V9" fill="#cccccc" stroke="#000" stroke-width="1.5"/><ellipse cx="17" cy="9" rx="5" ry="2.5" fill="#e6e6e6" stroke="#000" stroke-width="1.5"/><path d="M12 5v4c0 1.5 2.5 2.5 5 2.5s5-1 5-2.5V5" fill="#cccccc" stroke="#000" stroke-width="1.5"/><ellipse cx="17" cy="5" rx="5" ry="2.5" fill="#ffffff" stroke="#000" stroke-width="1.5"/><path d="M3 13v5c0 1.5 3 2.5 6 2.5s6-1 6-2.5v-5" fill="#cccccc" stroke="#000" stroke-width="1.5"/><ellipse cx="9" cy="13" rx="6" ry="2.5" fill="#e6e6e6" stroke="#000" stroke-width="1.5"/><path d="M3 9v4c0 1.5 3 2.5 6 2.5s6-1 6-2.5V9" fill="#cccccc" stroke="#000" stroke-width="1.5"/><ellipse cx="9" cy="9" rx="6" ry="2.5" fill="#ffffff" stroke="#000" stroke-width="1.5"/></svg>`;
 
 // ===========================
-// BOT MATCH
+// CARD ELEMENT HELPER
 // ===========================
+function makeCardEl(card, extraClass='', extraStyle='') {
+  const div = document.createElement('div');
+  div.className = `fut-card ${card.type}${extraClass ? ' '+extraClass : ''}`;
+  if(extraStyle) div.style.cssText = extraStyle;
+  if(card.limitedImg) {
+    div.style.backgroundImage = `url('${card.limitedImg}')`;
+    div.style.backgroundSize = 'cover';
+    div.style.backgroundPosition = 'center';
+    // No overlay text — design is baked into the card image
+  } else {
+    div.innerHTML = `<div class="fut-rating">${card.rating}</div><div class="fut-bottom"><span class="fut-name">${card.name}</span></div>`;
+  }
+  return div;
+}
+
+function makeCardHTML(card) {
+  if(card.limitedImg) {
+    return `<div class="fut-card ${card.type}" style="background-image:url('${card.limitedImg}');background-size:cover;background-position:center;width:100%;height:100%;box-shadow:none;"></div>`;
+  }
+  return `<div class="fut-card ${card.type}" style="width:100%;height:100%;box-shadow:none;">
+    <div class="fut-rating">${card.rating}</div>
+    <div class="fut-bottom"><span class="fut-name">${card.name}</span></div>
+  </div>`;
+}
 let currentMode = 'bot';
 let pScore = 0, oScore = 0, cardsPlayed = 0, isRoundActive = false;
 
@@ -863,9 +892,7 @@ function startLocalGame(mode, oppNameStr) {
   while(shuffled.length < 8) shuffled.push(...myCardsFull);
   for(let i=0; i<8; i++) {
     let card = shuffled[i];
-    let div = document.createElement('div');
-    div.className = `fut-card ${card.type}`;
-    div.innerHTML = `<div class="fut-rating">${card.rating}</div><div class="fut-bottom"><span class="fut-name">${card.name}</span></div>`;
+    let div = makeCardEl(card);
     div.onclick = function() { playBotRound(this, card.rating); };
     playerRow.appendChild(div);
   }
@@ -890,10 +917,8 @@ function renderOnlineHands() {
   let playerRow = document.getElementById('player-cards');
   playerRow.innerHTML = "";
   myCards8.forEach((card, idx) => {
-    let div = document.createElement('div');
-    div.className = `fut-card ${card.type}`;
+    let div = makeCardEl(card);
     div.dataset.idx = idx;
-    div.innerHTML = `<div class="fut-rating">${card.rating}</div><div class="fut-bottom"><span class="fut-name">${card.name}</span></div>`;
     div.onclick = function() { playOnlineCard(idx); };
     playerRow.appendChild(div);
   });
@@ -936,10 +961,7 @@ function playOnlineCard(idx) {
   // Show my card in slot
   const slotPlr = document.getElementById('slot-plr');
   slotPlr.innerHTML = '';
-  const clone = document.createElement('div');
-  clone.className = `fut-card ${card.type}`;
-  clone.style.pointerEvents = 'none';
-  clone.innerHTML = `<div class="fut-rating">${card.rating}</div><div class="fut-bottom"><span class="fut-name">${card.name}</span></div>`;
+  const clone = makeCardEl(card, '', 'pointer-events:none;');
   slotPlr.appendChild(clone);
 
   // Mark card as played
@@ -1000,9 +1022,8 @@ function resolveOnlineRound(myCard, oppCard, oppIdx) {
     <div class="flip-container" id="current-flip" style="width:100%;height:100%;">
       <div class="flip-inner">
         <div class="flip-front card-back" style="width:100%;height:100%;"></div>
-        <div class="flip-back fut-card ${oppCard.type}" style="width:100%;height:100%;box-shadow:none;">
-          <div class="fut-rating">${oppCard.rating}</div>
-          <div class="fut-bottom"><span class="fut-name">${oppCard.name}</span></div>
+        <div class="flip-back" style="position:absolute;inset:0;backface-visibility:hidden;transform:rotateY(180deg);border-radius:8px;overflow:hidden;">
+          ${makeCardHTML(oppCard)}
         </div>
       </div>
     </div>
@@ -1071,9 +1092,8 @@ function playBotRound(playerCardElement, pRating) {
     <div class="flip-container" id="current-flip" style="width:100%;height:100%;">
       <div class="flip-inner">
         <div class="flip-front card-back" style="width:100%;height:100%;"></div>
-        <div class="flip-back fut-card ${oppData.type}" style="width:100%;height:100%;box-shadow:none;">
-          <div class="fut-rating">${oRating}</div>
-          <div class="fut-bottom"><span class="fut-name">${oppData.name}</span></div>
+        <div class="flip-back" style="position:absolute;inset:0;backface-visibility:hidden;transform:rotateY(180deg);border-radius:8px;overflow:hidden;">
+          ${makeCardHTML(oppData)}
         </div>
       </div>
     </div>
