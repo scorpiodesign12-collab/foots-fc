@@ -6,7 +6,6 @@
 <title>FOOTS FC | СОСТАВ</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Orbitron:wght@700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://unpkg.com/drag-drop-touch"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;outline:none}
 html,body{width:100%;height:100%;overflow-x:hidden;background:#050505;font-family:'Montserrat',sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
@@ -71,7 +70,18 @@ html,body{width:100%;height:100%;overflow-x:hidden;background:#050505;font-famil
 .card-violet:not([data-limited="1"]){background-image:url('https://i.ibb.co/b0Dv2GN/image.webp')}
 .card-violet:hover,.card-violet:active{box-shadow:0 0 25px rgba(160,32,240,0.9)}
 
-.card-rating{position:absolute;top:10px;left:10px;font-family:'Orbitron',sans-serif;font-size:28px;font-weight:800;color:#fff;text-shadow:0 0 10px rgba(0,0,0,0.8),2px 2px 6px #000;z-index:2;line-height:1;transition:opacity .3s,transform .3s}
+.card.selected {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+    transform: scale(1.08) translateY(-4px);
+    z-index: 200;
+    box-shadow: 0 0 30px rgba(255,255,255,0.6) !important;
+}
+.card-slot.drop-target {
+    border-color: rgba(255,255,255,0.8) !important;
+    background: rgba(255,255,255,0.1) !important;
+    box-shadow: inset 0 0 20px rgba(255,255,255,0.15);
+};top:10px;left:10px;font-family:'Orbitron',sans-serif;font-size:28px;font-weight:800;color:#fff;text-shadow:0 0 10px rgba(0,0,0,0.8),2px 2px 6px #000;z-index:2;line-height:1;transition:opacity .3s,transform .3s}
 .card-name{width:100%;text-align:center;font-size:14px;font-weight:800;text-transform:uppercase;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,0.85));padding:25px 4px 8px;letter-spacing:1px;z-index:2;backdrop-filter:blur(1px);position:absolute;bottom:0;left:0;right:0}
 .bottom-sections{padding:0 30px 40px;max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:30px;user-select:none}
 .section-header{font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:15px;display:flex;align-items:center;gap:10px}
@@ -287,7 +297,6 @@ const _sess = getSession();
 
 <script>
 let currentCoins = _sess ? (_sess.coins||0) : 0;
-// Load fresh coins from Supabase
 (async()=>{
     const {data} = await db.from('profiles').select('coins').eq('id',_sess.id).single();
     if(data){ currentCoins = data.coins; updateCoinsUI(); }
@@ -297,32 +306,31 @@ const typeRanges = {'card-standard':[55,69],'card-blue':[70,79],'card-red':[80,8
 const allNames = ["Smith","Jones","Williams","Brown","Taylor","Davies","Evans","Thomas","Roberts","Walker","White","Harris","Martin","Clark","Moore","Anderson","Jackson","Thompson","Garcia","Martinez"];
 function rndInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 
-// === SHARED PLAYER DB — синхронизация через Supabase ===
+// === PLAYER DB — Supabase sync ===
 function getPlayersDB(){return JSON.parse(localStorage.getItem('foots_players_db')||'[]');}
 function savePlayersDB(arr){
-  localStorage.setItem('foots_players_db',JSON.stringify(arr));
-  // Debounced sync to Supabase
-  clearTimeout(window._playersSaveTimer);
-  window._playersSaveTimer = setTimeout(async()=>{
-    try {
-      await db.from('profiles').update({players_data: arr}).eq('id',_sess.id);
-    } catch(e){ console.warn('players sync err', e); }
-  }, 800);
+    localStorage.setItem('foots_players_db', JSON.stringify(arr));
+    clearTimeout(window._playersSaveTimer);
+    window._playersSaveTimer = setTimeout(async()=>{
+        try { await db.from('profiles').update({players_data: arr}).eq('id', _sess.id); }
+        catch(e){ console.warn('sync err', e); }
+    }, 800);
 }
 async function loadPlayersFromServer() {
-  try {
-    const {data} = await db.from('profiles').select('players_data').eq('id',_sess.id).single();
-    if(data && data.players_data && Array.isArray(data.players_data) && data.players_data.length > 0) {
-      localStorage.setItem('foots_players_db', JSON.stringify(data.players_data));
-      return data.players_data;
-    }
-  } catch(e){ console.warn('players load err', e); }
-  return null;
+    try {
+        const {data} = await db.from('profiles').select('players_data').eq('id',_sess.id).single();
+        if(data && data.players_data && Array.isArray(data.players_data) && data.players_data.length > 0) {
+            localStorage.setItem('foots_players_db', JSON.stringify(data.players_data));
+            return data.players_data;
+        }
+    } catch(e){ console.warn('load err', e); }
+    return null;
 }
 
 const maxUpgrades = {'card-standard':5,'card-blue':4,'card-red':3,'card-violet':1};
 const sellMultipliers = {'card-standard':10,'card-blue':20,'card-red':35,'card-violet':60};
 
+let selectedCard = null; // currently selected card element
 let selectedOriginalCardId = null;
 let sellState = null;
 
@@ -353,22 +361,145 @@ function updateCoinsUI() {
     document.getElementById('coins-balance').innerText = formatCoins(currentCoins);
     clearTimeout(window._coinSaveTimer);
     window._coinSaveTimer = setTimeout(async()=>{
-      await db.from('profiles').update({coins:currentCoins}).eq('id',_sess.id);
+        await db.from('profiles').update({coins:currentCoins}).eq('id',_sess.id);
     }, 1000);
 }
 
-function getRandomInt(min, max) { return Math.floor(Math.random()*(max-min+1))+min; }
+function isPitchSlot(slot) { return slot && document.getElementById('pitch-grid').contains(slot); }
+function isReserveSlot(slot) { return slot && document.getElementById('reserve-grid').contains(slot); }
+function getPitchCardCount() { return document.querySelectorAll('#pitch-grid .card').length; }
 
-function isPitchSlot(slot) {
-    return document.getElementById('pitch-grid').contains(slot);
-}
-function isReserveSlot(slot) {
-    return document.getElementById('reserve-grid').contains(slot);
+// === TEAM RATING with bonus ===
+function updateTeamRating() {
+    const cards = [...document.querySelectorAll('#pitch-grid .card')];
+    let total = 0, count = 0;
+    let limitedCount = 0;
+    cards.forEach(c => {
+        total += parseInt(c.dataset.rating);
+        count++;
+        if(c.dataset.limited === '1') limitedCount++;
+    });
+    let avg = count ? Math.round(total/count) : 0;
+    // Bonus +3 if all 8 pitch cards are limited
+    const bonus = (limitedCount === 8 && count === 8) ? 3 : 0;
+    const display = avg + bonus;
+    document.getElementById('team-rating').innerText = display;
+    if(bonus > 0) {
+        document.getElementById('team-rating').style.color = '#a020f0';
+        document.getElementById('team-rating').title = '+3 бонус за полный лимитированный состав!';
+    } else {
+        document.getElementById('team-rating').style.color = '#000';
+        document.getElementById('team-rating').title = '';
+    }
 }
 
-function getPitchCardCount() {
-    return document.querySelectorAll('#pitch-grid .card').length;
+// === CLICK-SELECT MOVE SYSTEM ===
+function deselectAll() {
+    if(selectedCard) {
+        selectedCard.classList.remove('selected');
+        selectedCard = null;
+    }
+    document.querySelectorAll('.card-slot.drop-target').forEach(s => s.classList.remove('drop-target'));
 }
+
+function highlightDropTargets(fromSlot) {
+    // Highlight all card-slots in pitch, reserve, and bench
+    document.querySelectorAll('#pitch-grid .card-slot, #reserve-grid .card-slot').forEach(s => {
+        s.classList.add('drop-target');
+    });
+    // Also highlight bench slots in all-players section
+    document.querySelectorAll('.all-player-slot').forEach(s => {
+        s.classList.add('drop-target');
+    });
+}
+
+function makeCardClickable(card) {
+    card.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        // If this card is already selected — deselect
+        if(selectedCard === card) { deselectAll(); return; }
+
+        // If another card is selected — try to move selected TO this card's slot (swap)
+        if(selectedCard) {
+            const targetSlot = card.parentElement;
+            moveSelectedTo(targetSlot);
+            return;
+        }
+
+        // Otherwise select this card
+        selectedCard = card;
+        card.classList.add('selected');
+        highlightDropTargets(card.parentElement);
+    });
+}
+
+function makeSlotClickable(slot) {
+    slot.addEventListener('click', function(e) {
+        if(!selectedCard) return;
+        // Don't trigger if clicked directly on the card inside
+        if(e.target !== slot && slot.contains(e.target) && slot.querySelector('.card') === e.target) return;
+        moveSelectedTo(slot);
+    });
+}
+
+function moveSelectedTo(targetSlot) {
+    if(!selectedCard) return;
+    const originSlot = selectedCard.parentElement;
+    if(!originSlot || originSlot === targetSlot) { deselectAll(); return; }
+
+    const targetCard = targetSlot.querySelector('.card');
+
+    // Prevent removing from pitch if it would leave < 8 and target has no card
+    if(isPitchSlot(originSlot) && !isPitchSlot(targetSlot) && !targetCard) {
+        if(getPitchCardCount() <= 8) {
+            showToast('⚠️ Минимум 8 игроков в основе!');
+            deselectAll();
+            return;
+        }
+    }
+
+    // Swap or move
+    if(targetCard) {
+        originSlot.appendChild(targetCard);
+    }
+    targetSlot.appendChild(selectedCard);
+
+    // Update DB
+    const players = getPlayersDB();
+    const moved = players.find(p => p.id === selectedCard.dataset.playerId);
+    const swapped = targetCard ? players.find(p => p.id === targetCard.dataset.playerId) : null;
+
+    if(moved) {
+        moved.inPitch = isPitchSlot(targetSlot);
+        moved.inReserve = isReserveSlot(targetSlot);
+    }
+    if(swapped) {
+        swapped.inPitch = isPitchSlot(originSlot);
+        swapped.inReserve = isReserveSlot(originSlot);
+        // If swapped goes to bench (all-players area)
+        if(!isPitchSlot(originSlot) && !isReserveSlot(originSlot)) {
+            swapped.inPitch = false;
+            swapped.inReserve = false;
+        }
+    }
+    // If moved goes to bench (all-players)
+    if(!isPitchSlot(targetSlot) && !isReserveSlot(targetSlot)) {
+        if(moved) { moved.inPitch = false; moved.inReserve = false; }
+    }
+
+    savePlayersDB(players);
+    deselectAll();
+    updateTeamRating();
+    updateAllPlayersSection();
+}
+
+// Click outside = deselect
+document.addEventListener('click', function(e) {
+    if(selectedCard && !e.target.closest('.card') && !e.target.closest('.card-slot')) {
+        deselectAll();
+    }
+});
 
 function createCardElement(type, rating, name, upgrades=0, playerId=null) {
     const slot = document.createElement('div');
@@ -378,7 +509,6 @@ function createCardElement(type, rating, name, upgrades=0, playerId=null) {
         const pl = playerId ? players.find(p=>p.id===playerId) : null;
         const card = document.createElement('div');
         card.className = `card ${type}`;
-        card.draggable = true;
         card.dataset.rating = rating;
         card.dataset.name = name;
         card.dataset.type = type;
@@ -390,86 +520,33 @@ function createCardElement(type, rating, name, upgrades=0, playerId=null) {
             card.style.backgroundImage = `url('${pl.limitedImg}')`;
             card.style.backgroundSize = 'cover';
             card.style.backgroundPosition = 'center top';
-            card.style.cursor = 'grab';
-            card.style.pointerEvents = 'auto';
             card.innerHTML = '';
         } else {
             card.innerHTML = `<div class="card-rating">${rating}</div><div class="card-name">${name}</div>`;
         }
-        setupDrag(card);
+        makeCardClickable(card);
         slot.appendChild(card);
     }
-    setupDropZone(slot);
+    makeSlotClickable(slot);
     return slot;
 }
 
-// Save pitch/reserve state back to players DB
 function saveGameState() {
     const players = getPlayersDB();
-    // Reset all placement flags
-    players.forEach(p=>{ p.inPitch=false; p.inReserve=false; p.upgrades = p.upgrades||0; });
-
+    players.forEach(p=>{ p.inPitch=false; p.inReserve=false; p.upgrades=p.upgrades||0; });
     document.querySelectorAll('#pitch-grid .card').forEach(card => {
-        const pid = card.dataset.playerId;
-        const pl = players.find(p=>p.id===pid);
+        const pl = players.find(p=>p.id===card.dataset.playerId);
         if(pl){ pl.inPitch=true; pl.upgrades=parseInt(card.dataset.upgrades)||0; pl.rating=parseInt(card.dataset.rating); }
     });
     document.querySelectorAll('#reserve-grid .card').forEach(card => {
-        const pid = card.dataset.playerId;
-        const pl = players.find(p=>p.id===pid);
+        const pl = players.find(p=>p.id===card.dataset.playerId);
         if(pl){ pl.inReserve=true; pl.upgrades=parseInt(card.dataset.upgrades)||0; pl.rating=parseInt(card.dataset.rating); }
     });
     savePlayersDB(players);
     updateAllPlayersSection();
 }
 
-function updateTeamRating() {
-    let total=0,count=0;
-    document.querySelectorAll('#pitch-grid .card').forEach(c=>{total+=parseInt(c.dataset.rating);count++;});
-    document.getElementById('team-rating').innerText = count?Math.round(total/count):0;
-}
-
-function setupDrag(card) {
-    card.addEventListener('dragstart', e => {
-        e.dataTransfer.setData('text/plain', card.id);
-        setTimeout(()=>card.classList.add('dragging'),0);
-    });
-    card.addEventListener('dragend', ()=>card.classList.remove('dragging'));
-}
-
-function setupDropZone(slot) {
-    slot.addEventListener('dragover', e=>e.preventDefault());
-    slot.addEventListener('drop', e=>{
-        e.preventDefault();
-        const draggedId = e.dataTransfer.getData('text/plain');
-        const dragged = document.getElementById(draggedId);
-        if (!dragged || dragged===slot.querySelector('.card')) return;
-
-        const originSlot = dragged.parentElement;
-        const targetCard = slot.querySelector('.card');
-
-        // Prevent removing from pitch if count would go below 8, unless swapping
-        const fromPitch = isPitchSlot(originSlot);
-        const toPitch = isPitchSlot(slot);
-        const fromAllPlayers = originSlot.classList.contains('all-player-slot');
-
-        if (fromPitch && !toPitch && !targetCard) {
-            if (getPitchCardCount() <= 8) {
-                showToast('⚠️ Минимум 8 игроков в основе!');
-                return;
-            }
-        }
-
-        if (targetCard) originSlot.appendChild(targetCard);
-        slot.appendChild(dragged);
-        dragged.classList.remove('dragging');
-        updateTeamRating();
-        saveGameState();
-        // Refresh all players section to remove moved card
-        updateAllPlayersSection();
-    });
-}
-
+// === SELL ZONE — click-based ===
 function clearSellZoneUI() {
     document.getElementById('sell-price').innerText = '0';
     const confirmBtn = document.getElementById('confirm-sell-btn');
@@ -481,42 +558,34 @@ function clearSellZoneUI() {
 
 function setupSellZone() {
     const zone = document.getElementById('sell-drop-zone');
-    zone.addEventListener('dragover', e=>{e.preventDefault();zone.classList.add('drag-over');});
-    zone.addEventListener('dragleave', ()=>zone.classList.remove('drag-over'));
-    zone.addEventListener('drop', e=>{
-        e.preventDefault();
-        zone.classList.remove('drag-over');
-        const draggedId = e.dataTransfer.getData('text/plain');
-        const dragged = document.getElementById(draggedId);
-        if (!dragged) return;
-
-        const originSlot = dragged.parentElement;
-        if (isPitchSlot(originSlot) && getPitchCardCount() <= 8) {
+    // Click on sell zone when card is selected
+    zone.addEventListener('click', () => {
+        if(!selectedCard) return;
+        const originSlot = selectedCard.parentElement;
+        if(isPitchSlot(originSlot) && getPitchCardCount() <= 8) {
             showToast('⚠️ Минимум 8 игроков в основе! Переведи в запас сначала.');
+            deselectAll();
             return;
         }
-
-        if (sellState) { returnCardFromSellZone(); }
-
-        sellState = { card: dragged, originSlot: originSlot };
-        zone.appendChild(dragged);
+        if(sellState) { returnCardFromSellZone(); }
+        sellState = { card: selectedCard, originSlot: originSlot };
+        zone.appendChild(selectedCard);
 
         const players = getPlayersDB();
-        const pl = players.find(p=>p.id===dragged.dataset.playerId);
+        const pl = players.find(p=>p.id===selectedCard.dataset.playerId);
         let price;
         if(pl && pl.isLimited) {
-            price = Math.max(660000, parseInt(dragged.dataset.rating) * (sellMultipliers[dragged.dataset.type]||60));
+            price = Math.max(660000, parseInt(selectedCard.dataset.rating) * (sellMultipliers[selectedCard.dataset.type]||60));
         } else {
-            const mult = sellMultipliers[dragged.dataset.type]||10;
-            price = parseInt(dragged.dataset.rating)*mult;
+            price = parseInt(selectedCard.dataset.rating) * (sellMultipliers[selectedCard.dataset.type]||10);
         }
         document.getElementById('sell-price').innerText = formatCoins(price);
-
         const confirmBtn = document.getElementById('confirm-sell-btn');
         const cancelBtn = document.getElementById('cancel-sell-btn');
         confirmBtn.classList.add('active');
         cancelBtn.style.opacity = '1';
         cancelBtn.style.pointerEvents = 'auto';
+        deselectAll();
     });
 }
 
@@ -546,15 +615,13 @@ function confirmSell() {
     if(pl && pl.isLimited) {
         price = Math.max(660000, parseInt(card.dataset.rating) * (sellMultipliers[card.dataset.type]||60));
     } else {
-        const mult = sellMultipliers[card.dataset.type]||10;
-        price = parseInt(card.dataset.rating)*mult;
+        price = parseInt(card.dataset.rating) * (sellMultipliers[card.dataset.type]||10);
     }
     card.classList.add('vanishing');
     setTimeout(()=>{
         const idx = players.findIndex(p=>p.id===card.dataset.playerId);
         if(idx!==-1) players.splice(idx,1);
         savePlayersDB(players);
-
         card.remove();
         sellState = null;
         currentCoins += price;
@@ -590,6 +657,7 @@ function populateCarousel() {
         clone.style.pointerEvents = 'auto';
         clone.removeAttribute('draggable');
         clone.id = 'carousel-'+c.id;
+        clone.classList.remove('selected');
         if(pl && pl.isLimited) {
             clone.style.opacity = '0.45';
             clone.title = 'Лимитированные карты нельзя прокачивать';
@@ -598,7 +666,7 @@ function populateCarousel() {
             badge.innerText = 'LIM';
             clone.appendChild(badge);
         } else {
-            clone.addEventListener('click',()=>selectPlayerForUpgrade(c.id,clone));
+            clone.addEventListener('click',()=>selectPlayerForUpgrade(c.id, clone));
         }
         carousel.appendChild(clone);
     });
@@ -614,6 +682,7 @@ function selectPlayerForUpgrade(originalId, clickedClone) {
     const cardCopy = orig.cloneNode(true);
     cardCopy.id = '';
     cardCopy.style.cssText = 'pointer-events:none;width:100%;height:100%';
+    cardCopy.classList.remove('selected');
     frame.appendChild(cardCopy);
     document.getElementById('stat-boost').classList.add('visible');
     document.getElementById('stat-cost').classList.add('visible');
@@ -641,16 +710,18 @@ function updateUpgradeUI(origCard) {
 
 function animatePlus4Fly() {
     const r1=document.getElementById('stat-boost-val').getBoundingClientRect();
-    const r2=document.querySelector('#target-frame .card-rating').getBoundingClientRect();
+    const r2=document.querySelector('#target-frame .card-rating');
+    if(!r2) return;
+    const r2r=r2.getBoundingClientRect();
     const el=document.createElement('div');
     el.innerText='+4';
     Object.assign(el.style,{position:'fixed',left:r1.left+'px',top:r1.top+'px',color:'#fff',
         fontFamily:"'Orbitron',sans-serif",fontSize:window.innerWidth<=800?'28px':'40px',
         fontWeight:'800',zIndex:'9999',transition:'all .5s cubic-bezier(.25,1,.5,1)',
-        textShadow:'0 0 15px rgba(255,255,255,0.8)'});
+        textShadow:'0 0 15px rgba(255,255,255,0.8)',pointerEvents:'none'});
     document.body.appendChild(el);
     el.getBoundingClientRect();
-    Object.assign(el.style,{left:r2.left+'px',top:r2.top+'px',transform:'scale(.5)',opacity:'0'});
+    Object.assign(el.style,{left:r2r.left+'px',top:r2r.top+'px',transform:'scale(.5)',opacity:'0'});
     setTimeout(()=>el.remove(),500);
 }
 
@@ -667,14 +738,15 @@ function performUpgrade() {
     orig.dataset.rating=newRating; orig.dataset.upgrades=currentUpgrades+1;
     animatePlus4Fly();
     const displayRating=document.querySelector('#target-frame .card-rating');
-    setTimeout(()=>{
+    if(displayRating) setTimeout(()=>{
         displayRating.classList.add('rating-animating');
         displayRating.innerText=newRating;
-        orig.querySelector('.card-rating').innerText=newRating;
+        const origRating = orig.querySelector('.card-rating');
+        if(origRating) origRating.innerText=newRating;
         updateTeamRating(); saveGameState();
     },400);
     setTimeout(()=>{
-        displayRating.classList.remove('rating-animating');
+        if(displayRating) displayRating.classList.remove('rating-animating');
         selectPlayerForUpgrade(selectedOriginalCardId,document.querySelector('#player-carousel .card[style*="border"]')||document.querySelector('#player-carousel .card'));
         populateCarousel();
     },900);
@@ -685,7 +757,6 @@ function closeTutorial() {
     localStorage.setItem('foots_tutorial_v7','1');
 }
 
-// Generate initial starter players if DB is empty (first time ever)
 function generateStarterPlayers() {
     const players = [];
     for(let i=0;i<4;i++){
@@ -707,18 +778,13 @@ function initGame() {
     pitchGrid.innerHTML=''; reserveGrid.innerHTML='';
 
     let players = getPlayersDB();
-
-    // First ever launch — no players at all
     if(players.length === 0) {
         players = generateStarterPlayers();
         savePlayersDB(players);
     }
 
-    // Ensure exactly 8 pitch slots and 4 reserve slots are rendered
     const pitchPlayers = players.filter(p=>p.inPitch).slice(0,8);
     const reservePlayers = players.filter(p=>p.inReserve).slice(0,4);
-
-    // If somehow fewer than 8 are in pitch, auto-assign unplaced players
     const unplaced = players.filter(p=>!p.inPitch && !p.inReserve);
     while(pitchPlayers.length < 8 && unplaced.length > 0) {
         const p = unplaced.shift();
@@ -726,13 +792,10 @@ function initGame() {
         pitchPlayers.push(p);
     }
 
-    // Render pitch (always 8 slots)
     for(let i=0;i<8;i++) {
         const p = pitchPlayers[i];
         pitchGrid.appendChild(p ? createCardElement(p.type,p.rating,p.name,p.upgrades,p.id) : createCardElement(null));
     }
-
-    // Render reserve (always 4 slots)
     for(let i=0;i<4;i++) {
         const p = reservePlayers[i];
         reserveGrid.appendChild(p ? createCardElement(p.type,p.rating,p.name,p.upgrades,p.id) : createCardElement(null));
@@ -749,7 +812,6 @@ function initGame() {
 function updateAllPlayersSection() {
     const container = document.getElementById('all-players-content');
     const players = getPlayersDB();
-    // Players NOT in pitch and NOT in reserve (bench players)
     const benchPlayers = players.filter(p=>!p.inPitch && !p.inReserve);
 
     if (!benchPlayers.length) {
@@ -762,12 +824,10 @@ function updateAllPlayersSection() {
     container.innerHTML = '';
 
     benchPlayers.forEach(p => {
-        // Make a draggable card with a wrapper slot
         const slot = document.createElement('div');
         slot.className = 'card-slot all-player-slot';
         slot.style.cssText = 'width:90px;height:120px;flex-shrink:0;border:none;background:transparent;position:relative;';
 
-        // If player has a limitedImg, show it
         const card = document.createElement('div');
         if(p.isLimited && p.limitedImg) {
             card.className = 'card card-violet';
@@ -775,64 +835,29 @@ function updateAllPlayersSection() {
             card.style.backgroundImage = `url('${p.limitedImg}')`;
             card.style.backgroundSize = 'cover';
             card.style.backgroundPosition = 'center top';
+            card.innerHTML = '';
         } else {
             card.className = `card ${p.type}`;
+            card.innerHTML = `<div class="card-rating" style="font-size:20px;top:6px;left:6px">${p.rating}</div><div class="card-name" style="font-size:11px;padding:20px 4px 6px">${p.name}</div>`;
         }
-        card.draggable = true;
         card.dataset.rating = p.rating;
         card.dataset.name = p.name;
         card.dataset.type = p.isLimited ? 'card-violet' : p.type;
         card.dataset.upgrades = p.upgrades || 0;
         card.dataset.playerId = p.id;
         card.id = p.id;
-        // No inline size — card fills its slot via CSS .card{width:100%;height:100%}
-        if(p.isLimited && p.limitedImg) {
-            card.innerHTML = ''; // No overlay — design is in the card image
-        } else {
-            card.innerHTML = `<div class="card-rating" style="font-size:20px;top:6px;left:6px">${p.rating}</div><div class="card-name" style="font-size:11px;padding:20px 4px 6px">${p.name}</div>`;
-        }
-        setupDrag(card);
+
+        makeCardClickable(card);
+        makeSlotClickable(slot);
         slot.appendChild(card);
-
-        // Drop zone on bench slot itself (so drag from pitch goes to bench)
-        slot.addEventListener('dragover', e=>e.preventDefault());
-        slot.addEventListener('drop', e=>{
-            e.preventDefault();
-            const draggedId = e.dataTransfer.getData('text/plain');
-            const dragged = document.getElementById(draggedId);
-            if (!dragged) return;
-            const originSlot = dragged.parentElement;
-            // Don't allow dropping from pitch if that would leave <8
-            if(isPitchSlot(originSlot) && getPitchCardCount() <= 8) {
-                showToast('⚠️ Минимум 8 игроков в основе!');
-                return;
-            }
-            // Mark the dragged player as unplaced in DB
-            const players2 = getPlayersDB();
-            const dp = players2.find(x=>x.id===dragged.dataset.playerId);
-            if(dp){ dp.inPitch=false; dp.inReserve=false; }
-            // Mark bench card as now going to origin slot
-            if(isPitchSlot(originSlot) || isReserveSlot(originSlot)) {
-                const bp = players2.find(x=>x.id===card.dataset.playerId);
-                if(bp){ bp.inPitch=isPitchSlot(originSlot); bp.inReserve=isReserveSlot(originSlot); }
-                originSlot.appendChild(card);
-            }
-            savePlayersDB(players2);
-            updateTeamRating();
-            updateAllPlayersSection();
-        });
-
         container.appendChild(slot);
     });
 }
 
 window.onload = async function() {
-  // Try to load players from Supabase first (for cross-device sync)
-  const serverPlayers = await loadPlayersFromServer();
-  // serverPlayers already set to localStorage inside loadPlayersFromServer
-  initGame();
+    const serverPlayers = await loadPlayersFromServer();
+    initGame();
 };
-
 </script>
 </body>
 </html>
