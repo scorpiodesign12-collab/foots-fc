@@ -212,7 +212,37 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #050505; f
 .waiting-overlay .spinner { width: 40px; height: 40px; }
 .waiting-overlay p { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.6); animation: pulse 1.5s ease-in-out infinite; }
 
-@media (max-width: 768px) {
+/* DIFFICULTY SCREEN */
+.diff-grid { display: flex; flex-direction: column; gap: 12px; padding: 0 40px 40px; max-width: 700px; margin: 0 auto; width: 100%; }
+.diff-card { border-radius: 16px; background: #0c0c0c; border: 1px solid rgba(255,255,255,0.07); cursor: pointer; overflow: hidden; transition: all 0.2s; }
+.diff-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.18); background: #141414; }
+.diff-card:active { transform: scale(0.98); }
+.diff-card-inner { display: flex; align-items: center; gap: 16px; padding: 18px 20px; }
+.diff-icon-wrap { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.diff-icon-easy   { background: rgba(205,127,50,0.1); }
+.diff-icon-medium { background: rgba(0,150,255,0.1); }
+.diff-icon-hard   { background: rgba(255,50,50,0.1); }
+.diff-icon-insane { background: rgba(160,32,240,0.12); }
+.diff-info { flex: 1; min-width: 0; }
+.diff-name { font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 800; color: #fff; letter-spacing: 2px; margin-bottom: 6px; }
+.diff-cards-hint { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.4); }
+.diff-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.brown-dot  { background: #cd7f32; box-shadow: 0 0 6px rgba(205,127,50,0.6); }
+.blue-dot   { background: #0096ff; box-shadow: 0 0 6px rgba(0,150,255,0.6); }
+.red-dot    { background: #ff3232; box-shadow: 0 0 6px rgba(255,50,50,0.6); }
+.violet-dot { background: #a020f0; box-shadow: 0 0 6px rgba(160,32,240,0.6); }
+.diff-reward-badge { display: flex; align-items: center; gap: 6px; font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 800; color: #4CAF50; background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.25); border-radius: 20px; padding: 6px 14px; flex-shrink: 0; white-space: nowrap; }
+.diff-reward-insane { color: #cc44ff; background: rgba(160,32,240,0.12); border-color: rgba(160,32,240,0.3); }
+.svg-coin-sm { width: 16px; height: 16px; display: inline-block; vertical-align: middle; }
+.diff-bar { height: 3px; background: rgba(255,255,255,0.05); }
+.diff-bar-fill { height: 100%; border-radius: 0 2px 2px 0; transition: width 0.5s ease; }
+.diff-easy   { border-color: rgba(205,127,50,0.15); }
+.diff-medium { border-color: rgba(0,150,255,0.15); }
+.diff-hard   { border-color: rgba(255,50,50,0.15); }
+.diff-insane { border-color: rgba(160,32,240,0.2); box-shadow: 0 0 20px rgba(160,32,240,0.05); }
+@media (max-width: 768px) { .diff-grid { padding: 0 16px 30px; } .diff-card-inner { padding: 14px 16px; gap: 12px; } .diff-name { font-size: 13px; } .diff-reward-badge { font-size: 11px; padding: 5px 10px; } }
+
+
     .modal-header { padding: 20px; }
     .content-heading { padding: 0 20px 20px; }
     .cards-grid { padding: 0 20px; grid-template-columns: 1fr; }
@@ -307,7 +337,7 @@ const _sess = getSession();
       <p>Выходи на поле и докажи своё превосходство.</p>
     </div>
     <div class="cards-grid">
-      <div class="b-card" onclick="startBotMatch()">
+      <div class="b-card" onclick="switchScreen('difficulty-screen')">
         <div class="card-top"><div class="b-icon"><i class="fa-solid fa-robot"></i></div><span class="b-badge gray">ТРЕНИРОВКА</span></div>
         <div class="b-title">МАТЧ С БОТОМ</div><div class="b-desc">Отточи свои навыки против ИИ.</div>
       </div>
@@ -394,6 +424,131 @@ const _sess = getSession();
       <h2 style="font-family: 'Montserrat'; font-weight: 800; text-transform: uppercase;">Код комнаты</h2>
       <input type="text" class="join-input" id="joinCodeInput" placeholder="#XXXXX" maxlength="6">
       <button class="btn-primary" onclick="joinOnlineRoom()">ВОЙТИ</button>
+    </div>
+  </div>
+</div>
+
+<!-- === DIFFICULTY SCREEN === -->
+<div id="difficulty-screen" class="screen">
+  <div class="modal-header">
+    <div class="modal-back" onclick="switchScreen('play-menu-screen')"><i class="fa-solid fa-arrow-left"></i></div>
+    <div class="modal-title">ВЫБОР СЛОЖНОСТИ</div>
+  </div>
+  <div class="content-wrapper">
+    <div class="content-heading">
+      <h1>УРОВЕНЬ СЛОЖНОСТИ</h1>
+      <p>Чем сильнее соперник — тем больше монет за победу.</p>
+    </div>
+    <div class="diff-grid">
+
+      <!-- ЛЁГКИЙ -->
+      <div class="diff-card diff-easy" onclick="startBotMatch('easy')">
+        <div class="diff-card-inner">
+          <div class="diff-icon-wrap diff-icon-easy">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
+              <circle cx="24" cy="24" r="20" fill="rgba(205,127,50,0.15)" stroke="rgba(205,127,50,0.6)" stroke-width="1.5"/>
+              <path d="M16 28 C18 22 30 22 32 28" stroke="#cd7f32" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <circle cx="18" cy="21" r="2.5" fill="#cd7f32"/>
+              <circle cx="30" cy="21" r="2.5" fill="#cd7f32"/>
+            </svg>
+          </div>
+          <div class="diff-info">
+            <div class="diff-name">ЛЁГКИЙ</div>
+            <div class="diff-cards-hint">
+              <span class="diff-dot brown-dot"></span> Обычные карты
+            </div>
+          </div>
+          <div class="diff-reward-badge">
+            <svg class="svg-coin-sm" viewBox="0 0 24 24"><path d="M3 9v4c0 1.5 3 2.5 6 2.5s6-1 6-2.5V9" fill="#ccc" stroke="#000" stroke-width="1.5"/><ellipse cx="9" cy="9" rx="6" ry="2.5" fill="#fff" stroke="#000" stroke-width="1.5"/></svg>
+            +1 000
+          </div>
+        </div>
+        <div class="diff-bar"><div class="diff-bar-fill" style="width:20%;background:linear-gradient(90deg,#cd7f32,#e8a050)"></div></div>
+      </div>
+
+      <!-- СРЕДНИЙ -->
+      <div class="diff-card diff-medium" onclick="startBotMatch('medium')">
+        <div class="diff-card-inner">
+          <div class="diff-icon-wrap diff-icon-medium">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
+              <circle cx="24" cy="24" r="20" fill="rgba(0,150,255,0.12)" stroke="rgba(0,150,255,0.5)" stroke-width="1.5"/>
+              <path d="M16 26 C18 21 30 21 32 26" stroke="#0096ff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <circle cx="18" cy="20" r="2.5" fill="#0096ff"/>
+              <circle cx="30" cy="20" r="2.5" fill="#0096ff"/>
+              <path d="M20 31 L24 28 L28 31" stroke="#0096ff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="diff-info">
+            <div class="diff-name">СРЕДНИЙ</div>
+            <div class="diff-cards-hint">
+              <span class="diff-dot blue-dot"></span> Синие карты
+            </div>
+          </div>
+          <div class="diff-reward-badge">
+            <svg class="svg-coin-sm" viewBox="0 0 24 24"><path d="M3 9v4c0 1.5 3 2.5 6 2.5s6-1 6-2.5V9" fill="#ccc" stroke="#000" stroke-width="1.5"/><ellipse cx="9" cy="9" rx="6" ry="2.5" fill="#fff" stroke="#000" stroke-width="1.5"/></svg>
+            +3 000
+          </div>
+        </div>
+        <div class="diff-bar"><div class="diff-bar-fill" style="width:45%;background:linear-gradient(90deg,#0055cc,#0096ff)"></div></div>
+      </div>
+
+      <!-- ТЯЖЁЛЫЙ -->
+      <div class="diff-card diff-hard" onclick="startBotMatch('hard')">
+        <div class="diff-card-inner">
+          <div class="diff-icon-wrap diff-icon-hard">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
+              <circle cx="24" cy="24" r="20" fill="rgba(255,50,50,0.12)" stroke="rgba(255,50,50,0.5)" stroke-width="1.5"/>
+              <path d="M16 26 C18 19 30 19 32 26" stroke="#ff3232" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <circle cx="18" cy="19" r="2.5" fill="#ff3232"/>
+              <circle cx="30" cy="19" r="2.5" fill="#ff3232"/>
+              <path d="M19 31 L24 27 L29 31" stroke="#ff3232" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+              <path d="M21 34 L24 30 L27 34" stroke="#ff3232" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="diff-info">
+            <div class="diff-name">ТЯЖЁЛЫЙ</div>
+            <div class="diff-cards-hint">
+              <span class="diff-dot blue-dot"></span>
+              <span class="diff-dot red-dot"></span> Синие + Красные
+            </div>
+          </div>
+          <div class="diff-reward-badge">
+            <svg class="svg-coin-sm" viewBox="0 0 24 24"><path d="M3 9v4c0 1.5 3 2.5 6 2.5s6-1 6-2.5V9" fill="#ccc" stroke="#000" stroke-width="1.5"/><ellipse cx="9" cy="9" rx="6" ry="2.5" fill="#fff" stroke="#000" stroke-width="1.5"/></svg>
+            +6 000
+          </div>
+        </div>
+        <div class="diff-bar"><div class="diff-bar-fill" style="width:70%;background:linear-gradient(90deg,#cc0000,#ff3232)"></div></div>
+      </div>
+
+      <!-- НЕРЕАЛЬНЫЙ -->
+      <div class="diff-card diff-insane" onclick="startBotMatch('insane')">
+        <div class="diff-card-inner">
+          <div class="diff-icon-wrap diff-icon-insane">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
+              <circle cx="24" cy="24" r="20" fill="rgba(160,32,240,0.15)" stroke="rgba(160,32,240,0.6)" stroke-width="1.5"/>
+              <path d="M15 27 C17 17 31 17 33 27" stroke="#a020f0" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <circle cx="18" cy="17" r="2.5" fill="#a020f0"/>
+              <circle cx="30" cy="17" r="2.5" fill="#a020f0"/>
+              <path d="M24 29 L24 36" stroke="#a020f0" stroke-width="2" stroke-linecap="round"/>
+              <path d="M20 32 L28 32" stroke="#a020f0" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="24" cy="24" r="3" fill="rgba(160,32,240,0.3)" stroke="#a020f0" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="diff-info">
+            <div class="diff-name" style="background:linear-gradient(135deg,#cc44ff,#a020f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">НЕРЕАЛЬНЫЙ</div>
+            <div class="diff-cards-hint">
+              <span class="diff-dot red-dot"></span>
+              <span class="diff-dot violet-dot"></span> Красные + Фиол.
+            </div>
+          </div>
+          <div class="diff-reward-badge diff-reward-insane">
+            <svg class="svg-coin-sm" viewBox="0 0 24 24"><path d="M3 9v4c0 1.5 3 2.5 6 2.5s6-1 6-2.5V9" fill="#ccc" stroke="#000" stroke-width="1.5"/><ellipse cx="9" cy="9" rx="6" ry="2.5" fill="#fff" stroke="#000" stroke-width="1.5"/></svg>
+            +10 000
+          </div>
+        </div>
+        <div class="diff-bar"><div class="diff-bar-fill" style="width:100%;background:linear-gradient(90deg,#6600cc,#cc44ff)"></div></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -632,15 +787,40 @@ function makeCardHTML(card) {
     <div class="fut-bottom"><span class="fut-name">${card.name}</span></div>
   </div>`;
 }
+// ===========================
+// BOT DIFFICULTY
+// ===========================
+const DIFF_CONFIG = {
+  easy:   { label: 'ЛЁГКИЙ',     reward: 1000,  botTypes: ['brown'],          names: ['DAVIS','ROMERO','MILLER','WILSON','TAYLOR','ADAMS','WHITE','JONES'] },
+  medium: { label: 'СРЕДНИЙ',    reward: 3000,  botTypes: ['blue'],           names: ['SILVA','MOORE','HARRIS','MARTIN','CLARK','EVANS','COSTA','DIAZ']   },
+  hard:   { label: 'ТЯЖЁЛЫЙ',   reward: 6000,  botTypes: ['blue','red'],     names: ['KING','BERG','TORRES','SANTOS','RAMOS','FERREIRA','ORTIZ','NETO']  },
+  insane: { label: 'НЕРЕАЛЬНЫЙ', reward: 10000, botTypes: ['red','violet'],   names: ['BOLT','ZEUS','ACE','STORM','VEGA','APEX','TITAN','SIGMA']          }
+};
+const RATING_RANGES = { brown:[55,69], blue:[70,79], red:[80,89], violet:[90,99] };
+
+let currentDifficulty = 'easy';
+
+function getBotCard(difficulty) {
+  const cfg = DIFF_CONFIG[difficulty];
+  const type = cfg.botTypes[Math.floor(Math.random() * cfg.botTypes.length)];
+  const [mn, mx] = RATING_RANGES[type];
+  const name = cfg.names[Math.floor(Math.random() * cfg.names.length)];
+  return { name, rating: Math.floor(Math.random()*(mx-mn+1))+mn, type, limitedImg: null };
+}
+
 let currentMode = 'bot';
 let pScore = 0, oScore = 0, cardsPlayed = 0, isRoundActive = false;
 
-function startBotMatch() {
-  currentMode = 'bot';
+function startBotMatch(difficulty = 'easy') {
+  currentDifficulty = difficulty;
+  const cfg = DIFF_CONFIG[difficulty];
   let botId = Math.floor(Math.random() * 999) + 1;
   document.getElementById('bot-random-name').innerText = `BOT_${botId}`;
+  // Show difficulty label in loading screen
+  const hint = document.querySelector('#bot-loading-screen .lobby-hint');
+  if(hint) hint.innerHTML = `Сложность: <b style="color:#fff">${cfg.label}</b> · Подготовка...`;
   switchScreen('bot-loading-screen');
-  setTimeout(() => startLocalGame('bot', `BOT_${botId}`), 2500);
+  setTimeout(() => startLocalGame('bot', `BOT_${botId}`), 2000);
 }
 
 // ===========================
@@ -1084,7 +1264,7 @@ function playBotRound(playerCardElement, pRating) {
   let oppHand = document.getElementById('opponent-cards');
   if(oppHand.children.length > 0) oppHand.removeChild(oppHand.lastElementChild);
 
-  let oppData = CARDS_DB_DEFAULT[Math.floor(Math.random() * CARDS_DB_DEFAULT.length)];
+  let oppData = getBotCard(currentDifficulty);
   let oRating = oppData.rating;
 
   let slotOpp = document.getElementById('slot-opp');
@@ -1143,7 +1323,7 @@ function showMatchResult() {
   if(pScore > oScore) {
     title.innerText = "ПОБЕДА";
     title.className = "end-title win";
-    coinsDiff = (currentMode === 'bot') ? 1000 : 2000;
+    coinsDiff = (currentMode === 'bot') ? DIFF_CONFIG[currentDifficulty].reward : 2000;
     reward.innerHTML = `${svgCoinHTML} +${coinsDiff}`;
     reward.style.color = "#4CAF50";
   } else if(oScore > pScore) {
