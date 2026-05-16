@@ -81,7 +81,8 @@ html,body{width:100%;height:100%;overflow-x:hidden;background:#050505;font-famil
     border-color: rgba(255,255,255,0.8) !important;
     background: rgba(255,255,255,0.1) !important;
     box-shadow: inset 0 0 20px rgba(255,255,255,0.15);
-};top:10px;left:10px;font-family:'Orbitron',sans-serif;font-size:28px;font-weight:800;color:#fff;text-shadow:0 0 10px rgba(0,0,0,0.8),2px 2px 6px #000;z-index:2;line-height:1;transition:opacity .3s,transform .3s}
+}
+.card-rating{position:absolute;top:10px;left:10px;font-family:'Orbitron',sans-serif;font-size:28px;font-weight:800;color:#fff;text-shadow:0 0 10px rgba(0,0,0,0.8),2px 2px 6px #000;z-index:2;line-height:1;transition:opacity .3s,transform .3s}
 .card-name{width:100%;text-align:center;font-size:14px;font-weight:800;text-transform:uppercase;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,0.85));padding:25px 4px 8px;letter-spacing:1px;z-index:2;backdrop-filter:blur(1px);position:absolute;bottom:0;left:0;right:0}
 .bottom-sections{padding:0 30px 40px;max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:30px;user-select:none}
 .section-header{font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:15px;display:flex;align-items:center;gap:10px}
@@ -460,14 +461,17 @@ function moveSelectedTo(targetSlot) {
     }
 
     // Swap or move
+    const movedCard = selectedCard;
     if(targetCard) {
         originSlot.appendChild(targetCard);
+        makeCardClickable(targetCard);
+        makeSlotClickable(originSlot);
     }
-    targetSlot.appendChild(selectedCard);
+    targetSlot.appendChild(movedCard);
 
     // Update DB
     const players = getPlayersDB();
-    const moved = players.find(p => p.id === selectedCard.dataset.playerId);
+    const moved = players.find(p => p.id === movedCard.dataset.playerId);
     const swapped = targetCard ? players.find(p => p.id === targetCard.dataset.playerId) : null;
 
     if(moved) {
@@ -477,13 +481,11 @@ function moveSelectedTo(targetSlot) {
     if(swapped) {
         swapped.inPitch = isPitchSlot(originSlot);
         swapped.inReserve = isReserveSlot(originSlot);
-        // If swapped goes to bench (all-players area)
         if(!isPitchSlot(originSlot) && !isReserveSlot(originSlot)) {
             swapped.inPitch = false;
             swapped.inReserve = false;
         }
     }
-    // If moved goes to bench (all-players)
     if(!isPitchSlot(targetSlot) && !isReserveSlot(targetSlot)) {
         if(moved) { moved.inPitch = false; moved.inReserve = false; }
     }
@@ -520,7 +522,7 @@ function createCardElement(type, rating, name, upgrades=0, playerId=null) {
             card.style.backgroundImage = `url('${pl.limitedImg}')`;
             card.style.backgroundSize = 'cover';
             card.style.backgroundPosition = 'center top';
-            card.innerHTML = '';
+            card.innerHTML = `<div class="card-rating">${rating}</div><div class="card-name">${name}</div>`;
         } else {
             card.innerHTML = `<div class="card-rating">${rating}</div><div class="card-name">${name}</div>`;
         }
@@ -835,7 +837,7 @@ function updateAllPlayersSection() {
             card.style.backgroundImage = `url('${p.limitedImg}')`;
             card.style.backgroundSize = 'cover';
             card.style.backgroundPosition = 'center top';
-            card.innerHTML = '';
+            card.innerHTML = `<div class="card-rating" style="font-size:20px;top:6px;left:6px">${p.rating}</div><div class="card-name" style="font-size:11px;padding:20px 4px 6px">${p.name}</div>`;
         } else {
             card.className = `card ${p.type}`;
             card.innerHTML = `<div class="card-rating" style="font-size:20px;top:6px;left:6px">${p.rating}</div><div class="card-name" style="font-size:11px;padding:20px 4px 6px">${p.name}</div>`;
@@ -855,7 +857,11 @@ function updateAllPlayersSection() {
 }
 
 window.onload = async function() {
-    const serverPlayers = await loadPlayersFromServer();
+    // Show loading overlay while syncing from server
+    document.body.insertAdjacentHTML('afterbegin','<div id="sync-overlay" style="position:fixed;inset:0;background:#050505;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px"><i class="fa-regular fa-futbol" style="font-size:40px;animation:ratingUpdateAnim 1s linear infinite"></i><span style="font-size:13px;opacity:.5;font-weight:600">Синхронизация...</span></div>');
+    // Always fetch from server to ensure cross-device sync
+    await loadPlayersFromServer();
+    document.getElementById('sync-overlay')?.remove();
     initGame();
 };
 </script>

@@ -395,7 +395,11 @@ const save = () => {
 };
 // Load from Supabase on page start
 (async()=>{
-  const {data:prof} = await db.from('profiles').select('coins,password,club').eq('id',_sess.id).single();
+  const {data:prof} = await db.from('profiles').select('coins,password,club,players_data').eq('id',_sess.id).single();
+  // Sync players from server so rating is correct on any device
+  if(prof && prof.players_data && Array.isArray(prof.players_data) && prof.players_data.length > 0) {
+    localStorage.setItem('foots_players_db', JSON.stringify(prof.players_data));
+  }
   const _localKey = 'fmData_' + (_sess ? _sess.id : 'anon');
   let local = JSON.parse(localStorage.getItem(_localKey)||'null');
   G.coins = prof ? prof.coins : 10000000;
