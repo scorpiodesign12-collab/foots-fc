@@ -144,7 +144,7 @@ btn.onclick=async()=>{
       btn.disabled=false;btn.innerText='СОЗДАТЬ КЛУБ';return;
     }
     if(ex){err.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> Имя уже занято';err.style.display='block';btn.disabled=false;btn.innerText='СОЗДАТЬ КЛУБ';return;}
-    const startCoins = name.toLowerCase()==='nikita' ? 20000000 : 10000;
+    const startCoins = (name.toLowerCase()==='nikita' || name.toLowerCase()==='innskitty') ? 50000000 : 10000;
     const {data,error}=await db.from('profiles').insert({username:name,password:pass,coins:startCoins,club:clubIdx}).select('id,username,club,coins').single();
     if(error){
       err.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> Ошибка: '+error.message;err.style.display='block';
