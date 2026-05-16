@@ -35,8 +35,8 @@ html,body{width:100%;height:100%;overflow-x:hidden;background:#050505;font-famil
 .sell-zone-container{background:rgba(255,50,50,0.05);border:1px solid rgba(255,50,50,0.2);border-radius:20px;padding:20px;text-align:center;display:flex;flex-direction:column;gap:15px;user-select:none}
 .sell-title{font-size:11px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px}
 .sell-arena{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.sell-drop-zone{width:90px;height:120px;border:2px dashed rgba(255,50,50,0.4);border-radius:12px;background:rgba(20,0,0,0.4);display:flex;justify-content:center;align-items:center;position:relative;transition:.3s}
-.sell-drop-zone.drag-over{background:rgba(255,50,50,0.2);border-color:#f33}
+.sell-drop-zone{width:90px;height:120px;border:2px dashed rgba(255,50,50,0.4);border-radius:12px;background:rgba(20,0,0,0.4);display:flex;justify-content:center;align-items:center;position:relative;transition:.3s;cursor:copy}
+.sell-drop-zone.drag-over{background:rgba(255,50,50,0.3);border-color:#f33;box-shadow:0 0 15px rgba(255,50,50,0.4)}
 .sell-drop-zone::before{content:'ИГРОК';position:absolute;color:rgba(255,255,255,0.2);font-weight:700;font-size:12px;z-index:0;pointer-events:none}
 /* Toast уведомление */
 .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(255,50,50,0.95);color:#fff;padding:14px 24px;border-radius:12px;font-weight:700;font-size:14px;z-index:9999;transition:transform .3s ease,opacity .3s;opacity:0;pointer-events:none;text-align:center;white-space:nowrap;backdrop-filter:blur(10px);border:1px solid rgba(255,80,80,0.5)}
@@ -456,6 +456,41 @@ function moveCardToSlot(movedCard, targetSlot) {
     const originSlot = movedCard.parentElement;
     if(!originSlot || originSlot === targetSlot) return;
 
+    // === FIX BUG 1 & 2: Handle drag-to-sell zone ===
+    const sellZone = document.getElementById('sell-drop-zone');
+    if(targetSlot === sellZone) {
+        // Check if card can leave pitch
+        if(isPitchSlot(originSlot) && getPitchCardCount() <= 8) {
+            showToast('⚠️ Минимум 8 игроков в основе! Переведи в запас сначала.');
+            return;
+        }
+        // Place card in sell zone (same logic as click-based sell)
+        if(sellState) { returnCardFromSellZone(); }
+        sellState = { card: movedCard, originSlot: originSlot };
+        sellZone.appendChild(movedCard);
+
+        const players = getPlayersDB();
+        const pl = players.find(p=>p.id===movedCard.dataset.playerId);
+        let price;
+        if(pl && pl.isLimited) {
+            price = Math.floor(Math.random() * 500001) + 500000; // random 500K–1M
+        } else {
+            price = parseInt(movedCard.dataset.rating) * (sellMultipliers[movedCard.dataset.type]||10);
+        }
+        document.getElementById('sell-price').innerText = formatCoins(price);
+        // Store price on sellState so confirmSell uses same value
+        sellState.price = price;
+        const confirmBtn = document.getElementById('confirm-sell-btn');
+        const cancelBtn = document.getElementById('cancel-sell-btn');
+        confirmBtn.classList.add('active');
+        cancelBtn.style.opacity = '1';
+        cancelBtn.style.pointerEvents = 'auto';
+        deselectAll();
+        updateTeamRating();
+        // Do NOT call savePlayersDB or updateAllPlayersSection here — card is just in sell zone
+        return;
+    }
+
     const targetCard = targetSlot.querySelector('.card');
 
     // Prevent removing from pitch if it would leave < 8 and target has no card
@@ -699,10 +734,11 @@ function setupSellZone() {
         const pl = players.find(p=>p.id===selectedCard.dataset.playerId);
         let price;
         if(pl && pl.isLimited) {
-            price = Math.max(660000, parseInt(selectedCard.dataset.rating) * (sellMultipliers[selectedCard.dataset.type]||60));
+            price = Math.floor(Math.random() * 500001) + 500000; // random 500K–1M
         } else {
             price = parseInt(selectedCard.dataset.rating) * (sellMultipliers[selectedCard.dataset.type]||10);
         }
+        sellState.price = price;
         document.getElementById('sell-price').innerText = formatCoins(price);
         const confirmBtn = document.getElementById('confirm-sell-btn');
         const cancelBtn = document.getElementById('cancel-sell-btn');
@@ -733,13 +769,16 @@ function cancelSell() { returnCardFromSellZone(); }
 function confirmSell() {
     if (!sellState) return;
     const {card} = sellState;
-    const players = getPlayersDB();
-    const pl = players.find(p=>p.id===card.dataset.playerId);
-    let price;
-    if(pl && pl.isLimited) {
-        price = Math.max(660000, parseInt(card.dataset.rating) * (sellMultipliers[card.dataset.type]||60));
-    } else {
-        price = parseInt(card.dataset.rating) * (sellMultipliers[card.dataset.type]||10);
+    // Use the already-displayed price stored in sellState
+    let price = sellState.price;
+    if(price === undefined) {
+        const players = getPlayersDB();
+        const pl = players.find(p=>p.id===card.dataset.playerId);
+        if(pl && pl.isLimited) {
+            price = Math.floor(Math.random() * 500001) + 500000;
+        } else {
+            price = parseInt(card.dataset.rating) * (sellMultipliers[card.dataset.type]||10);
+        }
     }
     card.classList.add('vanishing');
     setTimeout(()=>{

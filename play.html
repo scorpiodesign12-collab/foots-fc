@@ -704,6 +704,18 @@ const CARDS_DB_DEFAULT = [
 function getPlayerCards() {
   try {
     const players = JSON.parse(localStorage.getItem('foots_players_db')||'[]');
+    // Only use players that are in the pitch (inPitch === true)
+    const pitchPlayers = players.filter(p => p.inPitch === true);
+    if(pitchPlayers.length >= 4) {
+      const typeMap = {'card-standard':'brown','card-blue':'blue','card-red':'red','card-violet':'violet'};
+      return pitchPlayers.map(p=>({
+        name: p.name,
+        rating: p.rating,
+        type: typeMap[p.type] || 'brown',
+        limitedImg: (p.isLimited && p.limitedImg) ? p.limitedImg : null
+      }));
+    }
+    // fallback: use all players if pitch has < 4
     if(players.length >= 4) {
       const typeMap = {'card-standard':'brown','card-blue':'blue','card-red':'red','card-violet':'violet'};
       return players.map(p=>({
@@ -718,7 +730,7 @@ function getPlayerCards() {
     const state = JSON.parse(localStorage.getItem('foots_state_v7'));
     if(!state) return CARDS_DB_DEFAULT;
     const typeMap = {'card-standard':'brown','card-blue':'blue','card-red':'red','card-violet':'violet'};
-    const all = [...(state.pitch||[]), ...(state.reserve||[])].filter(c=>c&&c.type&&c.name)
+    const all = [...(state.pitch||[])].filter(c=>c&&c.type&&c.name)
       .map(c=>({name:c.name,rating:c.rating,type:typeMap[c.type]||'brown',limitedImg:null}));
     return all.length >= 4 ? all : CARDS_DB_DEFAULT;
   } catch(e) { return CARDS_DB_DEFAULT; }
