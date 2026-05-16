@@ -354,8 +354,13 @@ function createCardElement(type, rating, name, upgrades=0, playerId=null) {
     const slot = document.createElement('div');
     slot.className = 'card-slot';
     if (type) {
+        const players = getPlayersDB();
+        const pl = playerId ? players.find(p=>p.id===playerId) : null;
         const card = document.createElement('div');
         card.className = `card ${type}`;
+        if(pl && pl.isLimited && pl.limitedImg) {
+            card.style.backgroundImage = `url('${pl.limitedImg}')`;
+        }
         card.draggable = true;
         card.dataset.rating = rating;
         card.dataset.name = name;
@@ -469,8 +474,15 @@ function setupSellZone() {
         sellState = { card: dragged, originSlot: originSlot };
         zone.appendChild(dragged);
 
-        const mult = sellMultipliers[dragged.dataset.type]||10;
-        const price = parseInt(dragged.dataset.rating)*mult;
+        const players = getPlayersDB();
+        const pl = players.find(p=>p.id===dragged.dataset.playerId);
+        let price;
+        if(pl && pl.isLimited) {
+            price = Math.max(660000, parseInt(dragged.dataset.rating) * (sellMultipliers[dragged.dataset.type]||60));
+        } else {
+            const mult = sellMultipliers[dragged.dataset.type]||10;
+            price = parseInt(dragged.dataset.rating)*mult;
+        }
         document.getElementById('sell-price').innerText = formatCoins(price);
 
         const confirmBtn = document.getElementById('confirm-sell-btn');
@@ -501,12 +513,17 @@ function cancelSell() { returnCardFromSellZone(); }
 function confirmSell() {
     if (!sellState) return;
     const {card} = sellState;
-    const mult = sellMultipliers[card.dataset.type]||10;
-    const price = parseInt(card.dataset.rating)*mult;
+    const players = getPlayersDB();
+    const pl = players.find(p=>p.id===card.dataset.playerId);
+    let price;
+    if(pl && pl.isLimited) {
+        price = Math.max(660000, parseInt(card.dataset.rating) * (sellMultipliers[card.dataset.type]||60));
+    } else {
+        const mult = sellMultipliers[card.dataset.type]||10;
+        price = parseInt(card.dataset.rating)*mult;
+    }
     card.classList.add('vanishing');
     setTimeout(()=>{
-        // Remove from players DB
-        const players = getPlayersDB();
         const idx = players.findIndex(p=>p.id===card.dataset.playerId);
         if(idx!==-1) players.splice(idx,1);
         savePlayersDB(players);
@@ -539,12 +556,23 @@ function closeUpgradeModal() {
 function populateCarousel() {
     const carousel = document.getElementById('player-carousel');
     carousel.innerHTML = '';
+    const players = getPlayersDB();
     document.querySelectorAll('#pitch-grid .card, #reserve-grid .card').forEach(c=>{
+        const pl = players.find(p=>p.id===c.dataset.playerId);
         const clone = c.cloneNode(true);
         clone.style.pointerEvents = 'auto';
         clone.removeAttribute('draggable');
         clone.id = 'carousel-'+c.id;
-        clone.addEventListener('click',()=>selectPlayerForUpgrade(c.id,clone));
+        if(pl && pl.isLimited) {
+            clone.style.opacity = '0.45';
+            clone.title = 'Лимитированные карты нельзя прокачивать';
+            const badge = document.createElement('div');
+            badge.style.cssText = 'position:absolute;top:3px;right:3px;background:rgba(160,32,240,0.9);color:#fff;font-size:8px;font-weight:800;padding:2px 4px;border-radius:4px;letter-spacing:1px;z-index:10';
+            badge.innerText = 'LIM';
+            clone.appendChild(badge);
+        } else {
+            clone.addEventListener('click',()=>selectPlayerForUpgrade(c.id,clone));
+        }
         carousel.appendChild(clone);
     });
 }
