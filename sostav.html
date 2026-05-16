@@ -67,7 +67,8 @@ html,body{width:100%;height:100%;overflow-x:hidden;background:#050505;font-famil
 .card-blue:hover,.card-blue:active{box-shadow:0 0 25px rgba(0,150,255,0.9)}
 .card-red{background-color:rgba(180,0,0,0.5);border:1px solid rgba(255,50,50,0.5);box-shadow:0 0 10px rgba(255,50,50,0.5);background-image:url('https://i.ibb.co/pjN8ns3X/image.webp')}
 .card-red:hover,.card-red:active{box-shadow:0 0 25px rgba(255,50,50,0.9)}
-.card-violet{background-color:rgba(90,0,180,0.5);border:1px solid rgba(160,32,240,0.5);box-shadow:0 0 10px rgba(160,32,240,0.5);background-image:url('https://i.ibb.co/b0Dv2GN/image.webp')}
+.card-violet{background-color:rgba(90,0,180,0.5);border:1px solid rgba(160,32,240,0.5);box-shadow:0 0 10px rgba(160,32,240,0.5)}
+.card-violet:not([data-limited="1"]){background-image:url('https://i.ibb.co/b0Dv2GN/image.webp')}
 .card-violet:hover,.card-violet:active{box-shadow:0 0 25px rgba(160,32,240,0.9)}
 
 .card-rating{position:absolute;top:10px;left:10px;font-family:'Orbitron',sans-serif;font-size:28px;font-weight:800;color:#fff;text-shadow:0 0 10px rgba(0,0,0,0.8),2px 2px 6px #000;z-index:2;line-height:1;transition:opacity .3s,transform .3s}
@@ -385,12 +386,12 @@ function createCardElement(type, rating, name, upgrades=0, playerId=null) {
         card.dataset.playerId = playerId || ('card-' + Math.random().toString(36).substr(2,9));
         card.id = card.dataset.playerId;
         if(pl && pl.isLimited && pl.limitedImg) {
+            card.dataset.limited = '1';
             card.style.backgroundImage = `url('${pl.limitedImg}')`;
             card.style.backgroundSize = 'cover';
-            card.style.backgroundPosition = 'center';
+            card.style.backgroundPosition = 'center top';
             card.style.cursor = 'grab';
             card.style.pointerEvents = 'auto';
-            // No overlay text — design is in the image
             card.innerHTML = '';
         } else {
             card.innerHTML = `<div class="card-rating">${rating}</div><div class="card-name">${name}</div>`;
@@ -770,7 +771,10 @@ function updateAllPlayersSection() {
         const card = document.createElement('div');
         if(p.isLimited && p.limitedImg) {
             card.className = 'card card-violet';
+            card.dataset.limited = '1';
             card.style.backgroundImage = `url('${p.limitedImg}')`;
+            card.style.backgroundSize = 'cover';
+            card.style.backgroundPosition = 'center top';
         } else {
             card.className = `card ${p.type}`;
         }

@@ -198,14 +198,14 @@ const _sess = getSession();
 
 <div class="mwrap">
   <div class="minner">
-    <!-- Рейтинг команды -->
-    <div id="menu-rating-wrap" style="display:flex;align-items:center;gap:10px;margin-bottom:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:8px 20px 8px 12px">
-      <svg viewBox="0 0 100 120" width="32" height="38" style="flex-shrink:0">
-        <path d="M50 5 L95 20 L90 80 L50 115 L10 80 L5 20 Z" fill="#ffffff" stroke="#ddd" stroke-width="2"/>
-      </svg>
-      <div>
-        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px">Рейтинг команды</div>
-        <div id="menu-team-rating" style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:800;color:#000;background:#fff;border-radius:6px;padding:0 8px;margin-top:2px;display:inline-block;min-width:40px;text-align:center">0</div>
+    <!-- Рейтинг команды — как в составе -->
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px">Общий рейтинг</div>
+      <div style="position:relative;width:80px;height:92px;margin:0 auto;display:flex;justify-content:center;align-items:center">
+        <svg viewBox="0 0 100 120" style="position:absolute;inset:0;width:100%;height:100%">
+          <path d="M50 5 L95 20 L90 80 L50 115 L10 80 L5 20 Z" fill="#ffffff" stroke="#ddd" stroke-width="2"/>
+        </svg>
+        <span id="menu-team-rating" style="position:relative;font-family:'Orbitron',sans-serif;font-size:30px;font-weight:800;color:#000;z-index:2;margin-top:-8px">0</span>
       </div>
     </div>
     <div class="mgrid">
